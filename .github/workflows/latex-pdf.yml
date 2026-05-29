@@ -1,0 +1,39 @@
+name: Build LaTeX PDF
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: write
+
+jobs:
+  build-pdf:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build PDF
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: Phase_1/presentation
+          root_file: main.tex
+
+      - name: Commit PDF
+        run: |
+          set -euo pipefail
+          cd Phase_1/presentation
+          if git status --porcelain | grep -qE "\.pdf$"; then
+            git add *.pdf
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update presentation PDF [skip ci]"
+            git push
+          else
+            echo "No PDF changes to commit."
+          fi

@@ -1,0 +1,205 @@
+\documentclass[12pt]{article}
+\usepackage{HomeWorkTemplate}
+\usepackage{circuitikz}
+\usepackage[shortlabels]{enumitem}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{bm}
+\usepackage{amsmath , amssymb}
+\usepackage{xepersian}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage[american,siunitx]{circuitikz}
+\usepackage{bussproofs}
+\usepackage{ebproof}
+\usepackage{qtree}
+\usetikzlibrary{arrows,automata}
+\usetikzlibrary{circuits.logic.US}
+\settextfont{XB Niloofar.ttf}
+\usepackage{changepage}
+\newcounter{problemcounter}
+\newcounter{subproblemcounter}
+\setcounter{problemcounter}{1}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1em}
+
+\renewcommand{\problem}
+{
+\subsection*{
+سوال
+\arabic{problemcounter})
+\stepcounter{problemcounter}
+\setcounter{subproblemcounter}{1}
+}
+}
+
+\renewcommand{\subproblem}{
+\textbf{\abjad{subproblemcounter})}
+\stepcounter{subproblemcounter}
+}
+
+\setcounter{problemcounter}{1}
+
+
+
+
+\handout
+{اصول سیستم های کامپبوتری}
+{تمرین دوم}
+{آریا آل یس}
+{401100303}
+
+\begin{document}
+% --- Question 1 ---
+\problem 
+
+با توجه به نمودار وضعیت داده‌شده و بررسی انتقال‌ها بر اساس فرمت ورودی/خروجی ($X_1X_2 / Z$)، جدول حالت مدار ترتیبی به صورت زیر استخراج می‌شود:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|cccc|cccc|}
+\hline
+\textbf{حالت فعلی} & \multicolumn{4}{c|}{\textbf{حالت بعدی ($X_1X_2$)}} & \multicolumn{4}{c|}{\textbf{خروجی ($Z$)}} \\ \cline{2-9} 
+ & \textbf{00} & \textbf{01} & \textbf{10} & \textbf{11} & \textbf{00} & \textbf{01} & \textbf{10} & \textbf{11} \\ \hline
+\textbf{A} & A & B & B & A & 0 & 0 & 1 & 0 \\
+\textbf{B} & A & A & D & D & 0 & 0 & 1 & 1 \\
+\textbf{C} & A & A & C & C & 1 & 0 & 1 & 0 \\
+\textbf{D} & C & B & B & C & 1 & 1 & 0 & 1 \\ \hline
+\end{tabular}
+\end{table}
+
+
+% --- Question 2 ---
+\problem 
+
+\subproblem 
+
+با توجه به جدول مشخصات داده‌شده (که در آن نشانه $\bullet$ به معنای صفر منطقی و عدد ۱ به معنای یک منطقی است)، نمودار وضعیت مدار با ساختاری منظم و بدون تداخل خطوط به شکل زیر رسم می‌شود:
+
+\begin{center}
+\begin{tikzpicture}[->, >=stealth, shorten >=1pt, auto, node distance=3.5cm, semithick]
+  % تعریف مختصات دقیق گره‌ها برای جلوگیری از شلوغی
+  \node[state] (A) at (0,3.5) {$00$};
+  \node[state] (B) at (4,3.5) {$01$};
+  \node[state] (C) at (0,0) {$10$};
+  \node[state] (D) at (4,0) {$11$};
+
+  % رسم یال‌ها با انحناهای کنترل‌شده
+  \path (A) edge [loop left] node {$0/1$} (A)
+            edge [above] node {$1/1$} (B)
+        (B) edge [bend left=15] node [right, pos=0.3] {$0/0$} (C)
+            edge [right] node {$1/0$} (D)
+        (C) edge [loop left] node {$0/0$} (C)
+            edge [bend left=15] node [left, pos=0.3] {$1/0$} (A)
+        (D) edge [bend right=40] node [above left, pos=0.4] {$0/1$} (A)
+            edge [below] node {$1/1$} (C);
+\end{tikzpicture}
+\end{center}
+
+\subproblem 
+برای فلیپ‌فلاپ نوع D، معادله تحریک مستقیماً با حالت بعدی برابر است ($D = Q^+$). با ساده‌سازی جداول کارنو برای حالت‌های بعدی و خروجی $Z$، معادلات نهایی مدار به دست می‌آیند:
+
+$$ D_A = A^+ = \bar{A}B\bar{Y} + \bar{A}BY + A\bar{B}\bar{Y} + ABY = \bar{A}B + A(\bar{B}\bar{Y} + BY) = \bar{A}B + A\overline{(B \oplus Y)} $$
+
+$$ D_B = B^+ = \bar{A}\bar{B}Y + \bar{A}BY = \bar{A}Y(\bar{B} + B) = \bar{A}Y $$
+
+$$ Z = \bar{A}\bar{B}\bar{Y} + \bar{A}\bar{B}Y + AB\bar{Y} + ABY = \bar{A}\bar{B} + AB = \overline{(A \oplus B)} $$
+
+\textbf{رسم شماتیک مدار:}
+
+برای تکمیل فرآیند ساخت مدار، نمودار زیر ساختار سخت‌افزاری شامل بلوک منطق ترکیبی، فلیپ‌فلاپ‌ها، پایه‌های ساعت  و سیگنال رِست ناهمگام فعال با صفر  را نشان می‌دهد:
+
+\begin{center}
+\begin{tikzpicture}[scale=0.85, transform shape, >=stealth, semithick]
+  % بلوک منطق ترکیبی
+  \draw[fill=gray!10, thick] (-1,1) rectangle (1.5,4.5) node[pos=0.5, align=center] {منطق ترکیبی\\(گیت‌ها)};
+  
+  % فلیپ‌فلاپ A
+  \draw[thick] (4,3.2) rectangle (5.5,4.7);
+  \node at (4.75,3.95) {FF A};
+  \draw[thick] (4,3.4) -- (4.25,3.525) -- (4,3.65); % مثلث ساعت
+  
+  % فلیپ‌فلاپ B
+  \draw[thick] (4,0.5) rectangle (5.5,2);
+  \node at (4.75,1.25) {FF B};
+  \draw[thick] (4,0.7) -- (4.25,0.825) -- (4,0.95); % مثلث ساعت
+  
+  % خطوط ورودی و خروجی به بلوک ترکیبی
+  \draw[->] (-2,4) node[left] {$Y$} -- (-1,4);
+  \draw[->] (1.5,3.95) -- (4,3.95) node[above left] {$D_A$};
+  \draw[->] (1.5,1.25) -- (4,1.25) node[above left] {$D_B$};
+  
+  \draw[->] (5.5,3.95) -- (6.5,3.95) node[right] {$A$};
+  \draw[->] (5.5,1.25) -- (6.5,1.25) node[right] {$B$};
+  
+  % مسیرهای فیدبک حالت‌های فعلی به ورودی
+  \draw (6,3.95) -- (6,5.2) -- (-1.8,5.2) -- (-1.8,3) -- (-1,3);
+  \draw (6.2,1.25) -- (6.2,-0.5) -- (-2,-0.5) -- (-2,2) -- (-1,2);
+  
+  % خروجی اصلی مدار
+  \draw[->] (1.5,2.5) -- (2.5,2.5) node[above] {$Z$};
+  
+  % شبکه‌ی ساعت و رِست ناهمگام
+  \draw[->] (2.8,2.2) node[below] {CLK} |- (4,3.525);
+  \draw[->] (2.8,2.2) |- (4,0.825);
+  
+  \draw[->] (4.75,5.6) node[above] {Reset} -- (4.75,4.7) node[below left, pos=0.5] {\small o};
+  \draw[->] (4.75,-1) node[below] {Reset} -- (4.75,0.5) node[above left, pos=0.5] {\small o};
+\end{tikzpicture}
+\end{center}
+
+
+% --- Question 3 ---
+\problem 
+
+برای طراحی این فلیپ‌فلاپ از ساختار Master-Slave استفاده می‌کنیم. جهت اعمال سیگنال بارگذاری ($L$)، یک تابع مولتی‌پلکسری برای ورودی داده داخلی ($D_{in}$) تعریف می‌شود؛ به طوری که اگر $L=1$ باشد داده جدید ($D$) و اگر $L=0$ باشد، خروجی فعلی مدار ($Q$) جهت حفظ حالت انتخاب می‌شود:
+$$ D_{in} = L \cdot D + \bar{L} \cdot Q $$
+
+با توجه به محدودیت مسئله مبنی بر استفاده‌ی انحصاری از گیت‌های NAND و NOT، این رابطه را بر اساس قانون دمرگان بازنویسی می‌کنیم:
+$$ D_{in} = \overline{ \overline{(L \cdot D)} \cdot \overline{(\bar{L} \cdot Q)} } $$
+
+در ادامه، روابط تحریک لچ‌های مادری و پیرو \lr{($\bar{S}\bar{R}$ Latch)} بر پایه‌ی ورودی داده‌ی داخلی و سیگنال ساعت ($C$) به صورت زیر استخراج می‌شوند:
+
+\noindent \textbf{طبقه Master (فعال در سطح پایین ساعت $C=0$):}
+\begin{itemize}
+    \item $\overline{S}_M = \overline{D_{in} \cdot \overline{C}}$
+    \item $\overline{R}_M = \overline{\overline{D_{in}} \cdot \overline{C}}$
+\end{itemize}
+
+\noindent \textbf{طبقه Slave (فعال در سطح بالای ساعت $C=1$):}
+\begin{itemize}
+    \item $\overline{S}_S = \overline{Q_M \cdot C}$
+    \item $\overline{R}_S = \overline{\overline{Q_M} \cdot C}$
+\end{itemize}
+
+در نهایت، خروجی‌های حاصل از لچ Slave به عنوان خروجی‌های نهایی مدار ($Q$ و $\overline{Q}$) در نظر گرفته شده و جهت حفظ پایداری وضعیت، به گیت‌های ورودی فیدبک داده می‌شوند.
+
+
+% --- Question 4 ---
+\problem 
+
+این مدار یک شمارنده دهدهی  است که دنباله مشخصی از حالت \lr{0000} تا \lr{1001} را طی می‌کند و رفتار آن برای حالات \lr{1010} تا \lr{1111} نامشخص \lr{(Don't Care)} فرض می‌شود. با فرض این که خروجی‌ها به صورت $Q_3Q_2Q_1Q_0$ باشند، معادلات بهینه‌ی سیستم به شرح زیر است:
+
+\subsubsection*{1) پیاده‌سازی با فلیپ‌فلاپ‌های SR}
+
+با دوقطبی کردن جدول انتقال وضعیت و اعمال جدول تحریک فلیپ‌فلاپ‌های SR، توابع ورودی پس از ساده‌سازی با جدول کارنو به دست می‌آیند:
+
+\begin{itemize}
+    \item $S_0 = \overline{Q_0}, \quad R_0 = Q_0$
+    \item $S_1 = \overline{Q_3}\overline{Q_1}Q_0, \quad R_1 = Q_1Q_0$
+    \item $S_2 = \overline{Q_2}Q_1Q_0, \quad R_2 = Q_2Q_1Q_0$
+    \item $S_3 = Q_2Q_1Q_0, \quad R_3 = Q_3Q_0$
+\end{itemize}
+
+\subsubsection*{2) پیاده‌سازی با فلیپ‌فلاپ‌های T}
+
+با استفاده از رابطه تحریک فلیپ‌فلاپ نوع T ($T = Q \oplus Q^+$) و ساده‌سازی خانه‌های جدول کارنو، توابع کنترل ورودی هر فلیپ‌فلاپ به صورت زیر حاصل می‌شوند:
+
+\begin{itemize}
+    \item $T_0 = 1$
+    \item $T_1 = \overline{Q_3}Q_0$
+    \item $T_2 = Q_1Q_0$
+    \item $T_3 = Q_2Q_1Q_0 + Q_3Q_0$
+\end{itemize}
+
+\end{document}
