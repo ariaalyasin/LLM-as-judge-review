@@ -1,38 +1,362 @@
-\documentclass[12pt]{article}
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{lmodern}
-\usepackage{amsmath,amssymb}
+\documentclass[10pt]{beamer}
+
+\usetheme[progressbar=frametitle]{metropolis}
+\usepackage{appendixnumberbeamer}
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+
 \usepackage{hyperref}
 
-\title{LaTeX Build Test}
-\author{LLM-as-judge-review}
-\date{May 29, 2026}
+\title{LLM-as-a-Judge Reliability}
+\subtitle{Phase 1 Combined Presentation}
+\date{}
+\author{Parsa Gholami, Arya AlYasin, Mohsen Shirazi}
+\institute{Sharif University of Technology}
 
 \begin{document}
+
 \maketitle
+% ============================================================
+% TABLE OF CONTENTS - Papers Overview
+% ============================================================
+\begin{frame}{Table of Contents}
+  \begin{enumerate}
+    \item \hyperlink{paper4}{\textbf{Large Language Models are not Fair Evaluators}}
+    \item \hyperlink{paper3}{\textbf{Justice or Prejudice? Quantifying Biases in LLM-as-a-Judge}}
+  \end{enumerate}
+\end{frame}
 
-This is a minimal LaTeX file to verify the GitHub Actions build.
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 4: Large Language Models are not Fair Evaluators
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section*{Math Test}
-Here is a simple equation:
-\[
-    E = mc^2
-\]
+\begin{frame}[standout]
+  \hypertarget{paper4}{}
+  \Large Paper 4:\\Large Language Models are not Fair Evaluators
+\end{frame}
 
-\section*{List Test}
-\begin{itemize}
-    \item First item
-    \item Second item
-    \item Third item
-\end{itemize}
+\begin{frame}{Table of Contents -- Paper 4}
+  \begin{enumerate}
+    \item Introduction \& The Problem
+    \item The Core Discovery: Positional Bias
+    \item The Calibration Framework
+    \item Results \& Impact
+    \item Conclusion
+  \end{enumerate}
+\end{frame}
 
-\section*{Link Test}
-Visit \href{https://github.com/ariaalyasin/LLM-as-judge-review}{the repo}.
+\section{Introduction \& The Problem}
 
-\end{document}
-    \item $T_2 = Q_1Q_0$
-    \item $T_3 = Q_2Q_1Q_0 + Q_3Q_0$
-\end{itemize}
+\begin{frame}{The Evaluation Paradigm}
+  \begin{itemize}
+    \item \textbf{The Shift:} As LLMs advance, evaluating their alignment with human intent is critical.
+    \item \textbf{The Solution:} Researchers increasingly use LLMs like GPT-4 as automated referees to score and compare candidate models due to high human annotation costs.
+    \item \textbf{The Unknown:} It remains unclear how reliable LLMs actually are as evaluators against perturbations.
+  \end{itemize}
+\end{frame}
+
+\section{The Core Discovery: Positional Bias}
+
+\begin{frame}{The Achilles' Heel of LLM Evaluators}
+  \begin{itemize}
+    \item \textbf{Positional Bias:} The LLM-as-evaluator paradigm has a severe flaw. Quality ranking can be hacked by altering the order of candidates.
+    \item \textbf{Model Preferences:} GPT-4 consistently prefers the \textit{first} displayed candidate, while ChatGPT strongly favors the \textit{second}.
+    \item \textbf{The Flip:} Merely swapping the presentation order can completely reverse the evaluation outcomes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Visualizing the Bias}
+  \begin{figure}
+      \centering
+      \includegraphics[width=0.8\textwidth]{images/4/figure1.png} 
+      \caption{Swapping order overturns comparison results.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Quantifying the Unfairness}
+  \begin{itemize}
+    \item \textbf{Conflict Rate:} A metric introduced to measure the proportion of conflicting results given by the evaluator when candidate positions are swapped.
+    \item \textbf{The Formula:}
+    $$ \text{Conflict Rate} = \frac{\text{Number of Conflicting Evaluations}}{\text{Total Number of Evaluations}} $$
+    \item \textbf{Extreme Volatility:} ChatGPT exhibits a massive conflict rate of up to 82.5\% when comparing Vicuna-13B to ChatGPT.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Win Rate Fluctuation Data}
+  \begin{figure}
+      \centering
+      \includegraphics[width=1\textwidth]{images/4/table2.png}
+      \caption{Win rate fluctuation and Conflict Rates across different models.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{When Does Bias Hit the Hardest?}
+  \begin{itemize}
+    \item The degree of positional bias correlates directly with the quality difference between the two responses.
+    \item \textbf{Small Gap:} When candidate quality is very similar, the LLM is significantly more likely to produce conflicting results based purely on position.
+    \item \textbf{Large Gap:} If one response is obviously superior, the bias has less impact.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conflict Rate vs. Score Gap}
+  \begin{figure}
+      \centering
+      \includegraphics[width=0.7\textwidth]{images/4/figure2.png}
+      \caption{The conflict rate is negatively correlated with the score gap.}
+  \end{figure}
+\end{frame}
+
+\section{The Calibration Framework}
+
+\begin{frame}{Fixing the System: The 3-Step Strategy}
+  A calibration framework with three strategies is proposed to neutralize positional bias:
+  \begin{itemize}
+    \item \textbf{1. Multiple Evidence Calibration (MEC):} Forces the auto-regressive LLM to generate evaluation evidence \textit{before} assigning a score, averaging multiple samples for stability.
+    \item \textbf{2. Balanced Position Calibration (BPC):} Evaluates each candidate in both positions (A vs. B, then B vs. A) and averages the final scores.
+    \item \textbf{3. Human-in-the-Loop Calibration (HITLC):} Introduces the Balanced Position Diversity Entropy (BPDE) score to measure disagreement across runs. High BPDE scores flag difficult examples, routing only those to human annotators.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Full Calibration Pipeline}
+  \begin{figure}
+      \centering
+      \includegraphics[width=0.9\textwidth]{images/4/figure3.png}
+      \caption{Demonstration of the calibration framework with MEC, BPC, and HITLC.}
+  \end{figure}
+\end{frame}
+
+\section{Results \& Impact}
+
+\begin{frame}{Results \& Impact}
+  \begin{itemize}
+    \item \textbf{Alignment Boost:} MEC and BPC strategies enhanced the evaluation alignment accuracy with human judgment by 9.8\% for GPT-4 and 14.3\% for ChatGPT.
+    \item \textbf{Efficiency:} Utilizing HITLC with a 20\% human annotation threshold allows ChatGPT to achieve comparable alignment to average human performance.
+    \item \textbf{Cost Reduction:} This strategic routing method effectively reduces human annotation costs by up to 39\%.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Performance \& Cost Metrics}
+  \begin{figure}
+      \centering
+      \includegraphics[width=0.9\textwidth]{images/4/table4.png}
+      \caption{Accuracy, correlation, and cost of different evaluation methods.}
+  \end{figure}
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}{Summary}
+  \begin{itemize}
+    \item \textbf{The Illusion of Fairness:} Blindly trusting LLMs as evaluators leads to systematically biased results due to severe positional sensitivity.
+    \item \textbf{The Solution:} We must implement rigorous calibration protocols to ensure robust evaluation metrics.
+    \item \textbf{Actionable Steps:} 
+    \begin{enumerate}
+        \item Force evidence generation first (MEC).
+        \item Balance positional queries (BPC).
+        \item Strategically route high-entropy cases to humans (HITLC).
+    \end{enumerate}
+  \end{itemize}
+\end{frame}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 3: Justice or Prejudice?
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper3}{}
+  \Large Paper 3:\\Justice or Prejudice? Quantifying Biases in LLM-as-a-Judge
+\end{frame}
+
+\begin{frame}{Table of Contents -- Paper 3}
+  \begin{enumerate}
+    \item The Evaluation Dilemma
+    \item Quantifying Bias Sources (The CALM Framework)
+    \item Quantitative Evaluation Metrics
+    \item Key Results \& Findings
+    \item Conclusion
+  \end{enumerate}
+\end{frame}
+
+\section{The Evaluation Dilemma}
+
+\begin{frame}{The Vulnerability of LLM Judges}
+  \textbf{The Current Paradigm:}
+  \begin{itemize}
+      \item The industry heavily relies on LLM-as-a-Judge (pairwise comparison and direct scoring).
+      \item Human evaluation is slow, expensive, and subjective.
+  \end{itemize}
+  
+  \vspace{0.5cm}
+  \textbf{The Problem:}
+  \begin{itemize}
+      \item \alert{Inherent biases} undermine reliability and fairness.
+      \item Previous studies relied heavily on humans, risking subjective interference and random errors on small datasets.
+  \end{itemize}
+\end{frame}
+
+\section{Quantifying Bias Sources (The CALM Framework)}
+
+\begin{frame}{The CALM Pipeline}
+  \textbf{Comprehensive Assessment of Language Model Judge Biases}
+  
+  \vspace{0.3cm}
+  \begin{itemize}
+      \item \textbf{Attack-and-Detect Approach:} Automatically injects perturbations into instructions or responses without altering the actual correctness of the answer.
+      \item \textbf{Key Advantage:} Completely eliminates subjective human assessment, allowing for objective and scalable evaluation across massive datasets.
+  \end{itemize}
+  \vspace{0.5cm}
+  \textit{(See the architectural pipeline on the next slide)}
+\end{frame}
+
+\begin{frame}{Figure: CALM Framework Architecture}
+  \begin{figure}[h]
+      \centering
+      \includegraphics[width=0.95\textwidth]{images/3/pipeline.png} 
+      \caption{The automated pipeline for bias assessment.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Bias Assessment Problem Formulation}
+  To systematically test the judge, we formulate the input prompt $P$:
+  \vspace{0.3cm}
+  
+  \textbf{Standard Scoring:}
+  \begin{itemize}
+      \item Base prompt: $P = (I, Q, R)$ 
+      \item \textit{Where $I$ is Instruction, $Q$ is Question, $R$ is Response.}
+  \end{itemize}
+
+  \vspace{0.3cm}
+  \textbf{Pairwise Comparison (Targeting the Bias):}
+  \begin{itemize}
+      \item We compare two answers: $P = (I, Q, R_1, R_2)$
+      \item We apply an automated perturbation function $g(\cdot)$ to one answer.
+      \item \alert{The Hacked Prompt:} $\hat{P} = (I, Q, R_1, g(R_2))$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bias Types \& Automated Perturbation}
+  \textbf{How $g(\cdot)$ works:}
+  \begin{itemize}
+      \item The perturbation function uses a principle-guided LLM (like Constitutional AI) to deliberately inject specific biases.
+      \item \textbf{The Rule:} It changes the \textit{style, length, or context} of the answer, but \alert{never} changes the fundamental factual correctness.
+  \end{itemize}
+
+  \vspace{0.5cm}
+  \textbf{The 12 Bias Sources Assessed:}
+  \begin{itemize}
+      \item \textbf{Formatting:} Position, Verbosity, Distraction
+      \item \textbf{Logical:} Fallacy-Oversight, Authority
+      \item \textbf{Social:} Compassion-Fade, Bandwagon, Sentiment, Diversity
+      \item \textbf{Behavioral:} Chain-of-Thought, Self-Enhancement, Refinement
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Figure: The 12 Types of Biases}
+  \begin{figure}[h]
+      \centering
+      \includegraphics[width=0.9\textwidth]{images/3/bias_table.png} 
+      \caption{Definitions and examples of the 12 biases evaluated.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Evaluation Datasets}
+  To ensure comprehensive testing, CALM utilizes three distinct dataset categories:
+  
+  \vspace{0.5cm}
+  \begin{enumerate}
+      \item \textbf{Fact-Related Datasets:} 
+      \begin{itemize}
+          \item Focuses on Math and Science (e.g., GSM8K, MATH). Answers have a clear objective truth.
+      \end{itemize}
+      \item \textbf{Refinement-Aware Datasets:} 
+      \begin{itemize}
+          \item Humanities and open-ended QA where answers are improved via conversational history.
+      \end{itemize}
+      \item \textbf{Alignment Datasets:} 
+      \begin{itemize}
+          \item Data based on subjective human preference (DPO datasets). Quality differences between answers are much subtler.
+      \end{itemize}
+  \end{enumerate}
+\end{frame}
+
+\section{Quantitative Evaluation Metrics}
+
+\begin{frame}{Evaluation Metrics (How we measure fairness)}
+  Instead of relying on human intuition, CALM calculates specific metrics by running the judge multiple times:
+
+  \vspace{0.3cm}
+  \begin{itemize}
+      \item \textbf{Robustness Rate (RR):} Measures how consistently the model makes the \textit{exact same decision} before and after a bias is injected. Higher means better resistance.
+      \item \textbf{Consistency Rate (CR):} Evaluates stability. Does the model make the same choice when tested twice under identical, normal conditions?
+      \item \textbf{Accuracy (Original vs. Hacked):} Checks if the model's judgment aligns with the actual ground truth, before and after a bias attack.
+      \item \textbf{Error Rate:} Specifically used to quantify severe behavioral biases (like favoring its own outputs or favoring edited text).
+  \end{itemize}
+\end{frame}
+
+\section{Key Results \& Findings}
+
+\begin{frame}{Overall Model Vulnerabilities}
+  \textbf{Big Picture Findings:}
+  \vspace{0.3cm}
+  \begin{itemize}
+      \item No model is perfectly immune. Advanced models show unexpected vulnerabilities, particularly to sentiment and distraction.
+      \item \textbf{Claude-3.5} generally demonstrated the greatest overall resilience across most categories.
+      \item Performance varies wildly depending on the specific type of bias injected.
+  \end{itemize}
+  \vspace{0.5cm}
+  \textit{(See the radar chart comparison on the next slide)}
+\end{frame}
+
+\begin{frame}{Figure: Robustness Rate Radar Charts}
+  \begin{figure}[h]
+      \centering
+      \includegraphics[width=0.9\textwidth]{images/3/results_radar.png} 
+      \caption{Overall robustness rates of models against the 12 biases.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Summary of Key Findings (1/2)}
+  \begin{itemize}
+      \item \textbf{Even advanced models can exhibit unexpected vulnerabilities in judgment.} Top-tier models are not a silver bullet for fair evaluation.
+      \item \textbf{Bias is more pronounced in the alignment dataset compared to the fact-related dataset.} Subjective tasks are much easier to disrupt.
+      \item \textbf{Position bias increases with more answer candidates.} Evaluating 3 or 4 options drastically reduces the judge's robustness.
+      \item \textbf{Avoid using the same model to generate and judge answers.} Self-enhancement bias is severe; models heavily favor their own outputs.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary of Key Findings (2/2)}
+  \begin{itemize}
+      \item \textbf{Response length influences model judgment in complex ways.} Some favor verbosity blindly, others penalize it.
+      \item \textbf{Different types of fake authorities interfere to varying degrees.} Fake quotes and books disrupt judges heavily, while fake URLs are mostly ignored.
+      \item \textbf{LLMs show sensitivity to irrelevant content and emotional elements.} They generally penalize emotional text and struggle when distractions are added to high-quality answers.
+      \item \textbf{Explicit introduction of minority groups influences choices.} Models react differently to exposed demographic identities.
+      \item \textbf{Chain-of-Thought (CoT) improves LLMs evaluation accuracy.} Forcing step-by-step reasoning actively guards against bias.
+  \end{itemize}
+\end{frame}
+
+\section{Conclusion}
+
+\begin{frame}{Recommendations for Deployment}
+  \textbf{How to build reliable LLM Judges:}
+  \vspace{0.3cm}
+  \begin{enumerate}
+      \item \textbf{Enforce Advanced Reasoning:} Use Chain-of-Thought (CoT) prompting to force logic before a final score is given.
+      \item \textbf{Implement Prompt Safeguards:} Explicitly instruct the model to ignore formatting, identity markers, and emotional tone within the system prompt.
+      \item \textbf{Proactive Detection:} Utilize automated frameworks (like CALM) to detect vulnerabilities in evaluation templates \alert{before} deploying the system.
+  \end{enumerate}
+\end{frame}
+
+% ============================================================
+% END
+% ============================================================
 
 \end{document}
