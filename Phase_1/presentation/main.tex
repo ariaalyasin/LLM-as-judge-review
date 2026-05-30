@@ -133,6 +133,23 @@
   \end{figure}
 \end{frame}
 
+\begin{frame}{Optimizing the Calibration Parameters}
+  To make MEC and BPC viable, hyperparameter tuning is critical:
+  \begin{itemize}
+    \item \textbf{Number of Evidences ($k$):} Sampling multiple explanations stabilizes the evaluation.
+    \begin{itemize}
+        \item Empirical results show $\mathbf{k=3}$ is the optimal sweet spot, maximizing accuracy while controlling API costs.
+    \end{itemize}
+    \vspace{0.3cm}
+    \item \textbf{Sampling Temperature ($t$):} 
+    \begin{itemize}
+        \item \textit{Low temp ($t=0.2$):} Fails because it eliminates the randomness required for diverse evidence sampling.
+        \item \textit{High temp ($t=1.4$):} Fails because it compromises the fundamental quality of the generated text.
+        \item \textit{Optimal range:} $\mathbf{t \in [0.6, 1.0]}$ yields the best alignment.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
 \section{Results \& Impact}
 
 \begin{frame}{Results \& Impact}
