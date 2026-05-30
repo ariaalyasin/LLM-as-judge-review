@@ -18,7 +18,7 @@
 \title{LLM-as-a-Judge Reliability}
 \subtitle{Phase 1 Combined Presentation}
 \date{}
-\author{Parsa Gholami, Arya AlYasin, Mohsen Shirazi}
+\author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
 \institute{Sharif University of Technology}
 
 \begin{document}
@@ -29,14 +29,217 @@
 % ============================================================
 \begin{frame}{Table of Contents}
   \begin{enumerate}
+    \item \hyperlink{paper1}{\textbf{Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena}}
     \item \hyperlink{paper4}{\textbf{Large Language Models are not Fair Evaluators}}
     \item \hyperlink{paper3}{\textbf{Justice or Prejudice? Quantifying Biases in LLM-as-a-Judge}}
   \end{enumerate}
 \end{frame}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PAPER 4: Large Language Models are not Fair Evaluators
+% PAPER 1: Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper1}{}
+  \Large Paper 1:\\Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena
+\end{frame}
+
+\begin{frame}{Table of Contents -- Paper 1}
+  \begin{enumerate}
+    \item Traditional Evaluations \& Their Limitations
+    \item Two New Benchmarks: MT-Bench \& Chatbot Arena
+    \item Types of LLM Judges
+    \item Limitations of LLM Judges
+    \item Addressing the Biases
+    \item Agreement \& Human Preference Let's Check
+    \item The Hybrid Paradigm \& Conclusion
+  \end{enumerate}
+\end{frame}
+
+\section{Traditional Evaluations \& Their Limitations}
+
+\begin{frame}{Why Traditional Benchmarks Fail}
+  \begin{itemize}
+    \item Conventional benchmarks (MMLU, HELM) focus on \textbf{closed-ended, core knowledge tasks}.
+    \item They \textbf{fail to capture} human preferences in \textbf{open-ended, multi-turn conversations}.
+  \end{itemize}
+  \vspace{0.3cm}
+   
+\end{frame}
+
+\begin{frame}{Sample of failure}
+  \begin{figure} 
+      \centering
+      \includegraphics[width=0.7\textwidth]{images/1/figure1.png} 
+      \caption{A multi-turn failure example.} 
+   \end{figure} 
+\end{frame}
+
+\section{Two New Benchmarks: MT-Bench \& Chatbot Arena}
+
+\begin{frame}{MT-Bench}
+  \begin{itemize}
+    \item \textbf{MT-Bench Design:} 80 high-quality, multi-turn questions covering 8 core categories (Math, Coding, Writing, Reasoning, STEM, Humanities, Extraction, Roleplay).
+    \item \textbf{Why Multi-turn?} Evaluates the model's ability to maintain context and follow up on progressive instructions.
+  \end{itemize}
+  \vspace{0.3cm}
+   % \begin{figure} 
+   %    \centering
+   %    \includegraphics[width=0.7\textwidth]{images/1/table1_mtbench.png} 
+   %    \caption{MT-Bench example from Table 1.} 
+   % \end{figure} 
+\end{frame}
+
+\begin{frame}{Chatbot Arena}
+  \begin{itemize}
+    \item \textbf{Chatbot Arena Concept:} Crowdsourced, anonymous chatbot battles in the wild.
+    \item \textbf{Scale:} Over 30K+ real-user votes collected.
+    \item \textbf{Mechanics:} Users chat with two anonymous models side-by-side and vote on which one provides a better response.
+  \end{itemize}
+  \vspace{0.3cm}
+   % \begin{figure} 
+   %    \centering
+   %    \includegraphics[width=0.7\textwidth]{images/1/arena_visual.png} 
+   %    \caption{Conceptual visual of Chatbot Arena.} 
+   % \end{figure} 
+\end{frame}
+
+\section{Types of LLM Judges}
+
+\begin{frame}{How LLMs Evaluate (The Proposed Solution)}
+  \begin{itemize}
+    \item \textbf{Goal:} Use strong LLMs (like GPT-4) as a \textbf{scalable, explainable surrogate} for costly human evaluation.
+  \end{itemize}
+  \vspace{0.2cm}
+  \textbf{Three Judge Types:} 
+  \begin{enumerate}
+      \item \textbf{Pairwise Comparison:} The LLM is presented with a prompt and two models' answers, then asked to determine which is better (like Chatbot Arena).
+      \item \textbf{Single Answer Grading:} The LLM assigns a direct score (e.g., 1-10) to a single model's response.
+      \item \textbf{Reference-Guided Grading:} A baseline "gold standard" reference answer is provided to the LLM judge to assist in evaluation.
+  \end{enumerate}
+\end{frame}
+
+\section{Limitations of LLM Judges}
+
+\begin{frame}{Unmasking the Biases}
+  While powerful, LLM Judges exhibit several inherent flaws:
+  \begin{itemize}
+    \item \textbf{Position Bias:} A tendency to favor the response placed in the first position.
+    \item \textbf{Verbosity Bias:} Favoring longer, wordy answers, even if they aren't necessarily better.
+    \item \textbf{Self-Enhancement Bias:} Models tend to rate their own generated answers higher.
+    \item \textbf{Limited Reasoning:} Struggling to accurately grade complex math and logic without help.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Quantifying the Flaws: Position and Verbosity Bias}
+   \begin{figure} 
+      \centering
+      \includegraphics[width=0.7\textwidth]{images/1/table2.png} 
+      \caption{Position bias ,repetitive list attacking and position swap failures} 
+   \end{figure} 
+  \vspace{0.2cm}
+  \begin{itemize}
+    \item GPT-3.5 and Claude-v1 heavily favor the \textit{first} answer presented.
+    \item Models are also vulnerable to attacks where appending a repetitive, meaningless list of words to an answer artificially inflates its win rate due to \textbf{verbosity bias}.
+  \end{itemize}
+\end{frame}
+
+\section{Addressing the Biases}
+
+\begin{frame}{Mitigating LLM Judge Limitations}
+  To use LLMs as judges reliably, these strategies must be implemented:
+  \begin{itemize}
+    \item \textbf{Swapping Positions:} Run the comparison twice ($A$ vs $B$, then $B$ vs $A$) to cancel out position bias.
+    \item \textbf{Few-Shot \& Chain-of-Thought (CoT):} Forcing the judge to reason step-by-step \textit{before} scoring.
+    \item \textbf{Reference-Guided Grading:} Providing ground-truth facts.
+    \item \textbf{Fine tuning the model}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Impact of Mitigation}
+  % \begin{figure} 
+  %    \centering
+  %    \includegraphics[width=0.6\textwidth]{images/1/table4.png} 
+  %    \caption{Math grading failure drops from 70\% to 15\% with references (Table 4).} 
+  % \end{figure} 
+  \vspace{0.3cm}
+  \begin{itemize}
+      \item When evaluating complex math problems, providing a reference answer drops the LLM judge's failure rate dramatically (e.g., from an abysmal 70\% to a manageable 15\%).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Example of failure in CoT}
+   \begin{figure}
+      \centering
+      \includegraphics[
+          width=\textwidth,
+          height=0.9\textheight,
+          keepaspectratio
+      ]{images/1/example.png}
+   \end{figure}
+\end{frame}
+
+\section{Agreement \& Human Preference Let's Check}
+
+\begin{frame}{Do LLM Judges Match Humans?}
+  \begin{itemize}
+    \item GPT-4 achieves \textbf{more that 80\% agreeement} with human experts.
+    \item Remarkably, this \textbf{matches the exact agreement rate} found between two human judges.
+    \item Agreement is highest when the performance gap between the two models being compared is wider.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Do LLM Judges Match Humans?}
+   \begin{figure} 
+      \centering
+      \includegraphics[width=0.9\textwidth]{images/1/Table5.png} 
+      \caption{Agreement vs. Win Rate Difference.} 
+   \end{figure} 
+\end{frame}
+
+
+\begin{frame}{Chatbot Performance Leaderboard}
+  \begin{itemize}
+    \item Proprietary models (GPT-4, Claude) significantly \textbf{outperform} open-source variants (at the time of the paper).
+    \item Multi-turn evaluation (evaluating the second turn) widens the performance gap, highlighting the superior context retention of advanced models.
+  \end{itemize}
+  \vspace{0.3cm}
+\end{frame}
+
+\begin{frame}{Chatbot Performance Leaderboard}
+  \vspace{0.2cm}
+   \begin{figure} 
+      \centering
+      \includegraphics[width=0.7\textwidth]{images/1/figure3.png} 
+      \caption{Average win rate of six models under different judges on MT-bench.} 
+   \end{figure} 
+  \vspace{0.1cm}
+   \begin{figure} 
+      \centering
+      \includegraphics[width=0.7\textwidth]{images/1/figure4.png} 
+      \caption{Average win rate of nine models under different judges on Chatbot Arena} 
+   \end{figure} 
+\end{frame}
+
+\section{The Hybrid Paradigm \& Conclusion}
+
+\begin{frame}{Standardized vs. Preference Benchmarks}
+  \begin{itemize}
+    \item Fine-tuning on tiny instruction datasets can \textbf{fake a "preferred style"} in a chatbot without actually improving its core capabilities (like knowledge or reasoning).
+    \item \textbf{Conclusion:} No single metric tells the whole story. Future LLM evaluation must combine standard knowledge tests (like MMLU) with LLM-as-a-judge preference benchmarks.
+  \end{itemize}
+  \vspace{0.3cm}
+   \begin{figure} 
+      \centering
+      \includegraphics[width=0.85\textwidth]{images/1/table8.png} 
+   \end{figure}
+
+\end{frame}
+
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % PAPER 4: Large Language Models are not Fair Evaluators
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[standout]
   \hypertarget{paper4}{}
