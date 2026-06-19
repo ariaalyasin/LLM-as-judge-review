@@ -1,0 +1,270 @@
+\documentclass[10pt]{beamer}
+\usetheme[progressbar=frametitle]{metropolis}
+\usepackage{appendixnumberbeamer}
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+\usepackage{hyperref}
+
+\title{LLM-as-a-Judge Reliability}
+\subtitle{Phase 2 Combined Presentation}
+\date{}
+\author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
+\institute{Sharif University of Technology}
+
+\begin{document}
+\maketitle
+
+\begin{frame}{Table of Contents}
+  \begin{enumerate}
+    \item \hyperlink{paper6}{\textbf{Humans or LLMs as the Judge? A Study on Judgement Bias}}
+    \item \hyperlink{paper4}{\textbf{Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks}}
+  \end{enumerate}
+\end{frame}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 6: Humans or LLMs as the Judge? A Study on Judgement Bias
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper6}{}
+  \Large Paper 6:\\Humans or LLMs as the Judge? A Study on Judgement Bias
+\end{frame}
+
+\begin{frame}{The Reliability Bottleneck}
+  \begin{itemize}
+    \item \textbf{Inherent Vulnerability}: Both human and automated judges show systematic blindspots when evaluations are challenged with perturbed outputs.
+    \item \textbf{Threat to Evaluation Trust}: Exploitable biases allow models to artificially maximize benchmark metrics without showing true semantic improvements.
+    \item \textbf{The Need for Diagnostics}: Identifying how evaluators balance presentation against content accuracy is essential to engineer trustworthy reward models.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Connecting the Perspectives: From CALM to Intervention}
+  \begin{itemize}
+    \item \textbf{Framework Evolution}: In our previous session, we explored a wide spectrum of 12 distinct automated evaluation flaws under the comprehensive CALM framework.
+    \item \textbf{Targeted Analysis}: While that prior framework mapped out wide technical vulnerabilities, this paper introduces a more streamlined, targeted protocol.
+    \item \textbf{Human vs. Machine Focus}: This shift allows us to contrast human cognitive biases directly against large language model behavior under identical textual perturbations.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Flaws in Current Bias Frameworks}
+  \begin{itemize}
+    \item \textbf{Ground-Truth Dependency}: Existing bias validation pipelines require predefined gold standard benchmarks or standard human reference keys.
+    \item \textbf{Open-Ended Ambiguity}: Ground truth annotations are often ill-defined or entirely missing in organic, free-form generative tasks.
+    \item \textbf{Scale and Control Problems}: Traditional setups face high crowdsourcing costs or lean on extremely limited datasets that obscure true bias trends.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Taxonomy of Judgement Biases}
+  \begin{itemize}
+    \item \textbf{Semantic-Related Biases}: Distortions directly triggered by elements embedded within the core meaning and factual message of the text.
+    \begin{itemize}
+      \item \textit{Misinformation Oversight}: The systematic tendency to overlook factual errors or logic flaws.
+      \item \textit{Gender Bias}: Evaluator ignorance toward explicitly or implicitly gender-biased assertions.
+    \end{itemize}
+    \item \textbf{Semantic-Agnostic Biases}: Distortions caused by surface style, layout choices, or external structural signals independent of text validity.
+    \begin{itemize}
+      \item \textit{Authority Bias}: Attributing high credibility to responses that include reference anchors, regardless of their authenticity.
+      \item \textit{Beauty Bias}: A pronounced preference for visually appealing layouts, markdown structures, and emojis.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Reference-Free Intervention Framework}
+  \begin{itemize}
+    \item \textbf{Experimental Concept}: Isolates and quantifies evaluative vulnerabilities by introducing targeted mutations directly into output text.
+    \item \textbf{Paired Contrast Strategy}: Splits tasks into baseline control items and perturbed experimental items to map out true selection parameters.
+    \item \textbf{Quantifying Preference Shifts}: Tracks how specific stylistic or factual mutations alter the judge's baseline selection choices.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Controlled Experimental Workflow}
+  \begin{itemize}
+    \item \textbf{Control Phase}: Reviewers assess an unperturbed baseline pair of model responses generated for a shared prompt.
+    \item \textbf{Experimental Phase}: One of the baseline options is replaced with its systematically mutated or stylized counterpart.
+    \item \textbf{Position Randomization}: Absolute text placement orders are strictly shuffled to completely strip away confounding positional trends.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Visualizing Data Perturbation Structures}
+\centering
+\includegraphics[width=\textwidth]{images/6/figure1.png}
+\end{frame}
+
+\begin{frame}{The Pipeline and Score Aggregation}
+\centering
+\includegraphics[width=0.9\textwidth]{images/6/procedure.png}
+\end{frame}
+
+\begin{frame}{Quantifying Semantic and Agnostic Biases}
+  \begin{itemize}
+    \item \textbf{Factual Oversight Split}: Premium language models demonstrate solid fact-checking capabilities, but human judges show surprisingly high error tolerance.
+    \item \textbf{Social Alignment Divergence}: Well-educated student cohorts maintain complete gender neutrality, whereas automated judges retain notable gender blindspots.
+    \item \textbf{Universal Authority Trap}: Both human and automated evaluators fail to verify references, routinely treating fake citations as high-quality signals.
+    \item \textbf{Superficial Distractions}: Visual decorations, formatting style shifts, and emoji distributions easily skew fairness trends across both evaluator categories.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Deceiving LLM Judges: Method and Insights}
+  \begin{itemize}
+    \item \textbf{Adversarial Setup}: Weak, biased, or factually flawed answers are augmented with fake citations or rich markdown formats to evaluate if surface styling can bypass evaluation safeguards[cite: 3].
+    \item \textbf{Potency Discrepancy}: Fake reference insertions are significantly more effective at deceiving model judges than simple layout decorations, highlighting a severe structural vulnerability to artificial authority[cite: 3].
+    \item \textbf{The Proximity Effect}: The success of prompt-based hacks surges dramatically when the true quality gap between the candidate answers shrinks[cite: 3].
+    \item \textbf{Turnaround Success}: Simple zero-shot surface adjustments exploit authority and beauty biases effectively, achieving up to a 50\% attack success rate on premium judges[cite: 3].
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Core Framework Strengths}
+  \begin{itemize}
+    \item \textbf{Reference-Free Utility}: Measures real evaluative tendencies without requiring rigid human gold standard answer keys.
+    \item \textbf{Principled Perturbation Design}: Isolates independent judgment criteria by applying clean, systematic modifications to textual outputs.
+    \item \textbf{Exposing Post-Alignment Gaps}: Demonstrates that standard safety alignment steps fail to protect judges from shallow surface manipulations.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Operational Limitations}
+  \begin{itemize}
+    \item \textbf{Dataset Sample Scope}: The empirical analysis was restricted to a targeted, highly filtered cohort of 142 gold test samples.
+    \item \textbf{Demographic Demarcation}: Human baseline evaluations relied completely on undergraduate student cohorts, limiting broader population generalizations.
+    \item \textbf{Black-Box Constraints}: Investigating the structural mechanics behind model vulnerabilities remains difficult due to proprietary data secrecy.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Critical Strategic Outlook}
+  \begin{itemize}
+    \item \textbf{Style Over Substance}: Current alignment paradigms incentivize models to favor academic appearance and structural markers over verified truth.
+    \item \textbf{Knowledge Injection Focus}: Future model tuning must prioritize active verification and robust fact-checking rules over simple response formatting.
+    \item \textbf{Evaluation Urgency}: The community must design advanced, multi-agent evaluation frameworks that remain completely indifferent to cosmetic variations.
+  \end{itemize}
+\end{frame}
+
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 4: Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper4}{}
+  \Large Paper 4:\\Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks
+\end{frame}
+
+\begin{frame}{The Shift Toward Automated Judges}
+  \begin{itemize}
+    \item \textbf{Evaluation Bottleneck:} Evaluating Open-ended Natural Language Generation (NLG) tasks is inherently difficult for traditional reference-based metrics like BLEU or BERTScore.
+    \item \textbf{The LLM-as-a-Judge Solution:} Large Language Models are widely adopted as scalable, automated evaluators due to their high alignment with human preferences.
+    \item \textbf{The Standard Paradigm:} Prompting a closed or open-weight model to provide categorical labels, numerical scores, or comparative rankings of text generation.
+    \item \textbf{The Blindspot:} Validation studies extensively measure agreement across different judges, but critically overlook the stability of a single judge with itself.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Core Vulnerability: Intra-Rater Volatility}
+  \begin{itemize}
+    \item \textbf{Defining Self-Reliability:} The agreement of an evaluator with itself over multiple independent runs under identical conditions, prompts, and hyperparameters.
+    \item \textbf{Stochastic Noise:} Because LLMs rely on probabilistic token sampling during generation, consecutive evaluations can produce fluctuating ratings for the exact same input text.
+    \item \textbf{Arbitrary Judgments:} High intra-rater variance means an automated judge's verdict may be highly unstable, making baseline leaderboards and benchmarks noisy.
+    \item \textbf{The Essential Question:} Does an LLM exhibit consistent internal logic, or is automated evaluation a game of roulette?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Conventional Evaluation Metrics Inflate Agreement}
+  \begin{itemize}
+    \item \textbf{Overestimation Bias:} Standard metrics like raw Accuracy or Correlation fail to consider alignment that occurs purely due to random chance.
+    \item \textbf{The Label Distribution Problem:} In highly skewed datasets where one label heavily dominates, raw accuracy appears deceptively high while masking true alignment absence.
+    \item \textbf{Label Scale Sensitivity:} Chance agreement spikes significantly when the number of target categories decreases (e.g., binary vs. 5-point Likert scales).
+    \item \textbf{The Solution:} Transitioning to a rigorous, chance-corrected statistical framework to expose the true extent of evaluation consistency.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Experimental Multi-Run Evaluation Framework}
+  \begin{itemize}
+    \item \textbf{Multi-Run Execution Pattern:} Evaluating each target dataset across three completely independent generation runs under static prompt templates.
+    \item \textbf{Diverse Target Tasks:} Benchmarking across three foundational NLG evaluation regimes:
+      \begin{itemize}
+        \item \textbf{SummaC:} Binary classification of factual summary consistency.
+        \item \textbf{SummEval:} Multidimensional 1--5 Likert scale ratings (Coherence, Consistency, Fluency, Relevance).
+        \item \textbf{MT-Bench:} Pairwise model ranking in multi-turn conversational interactions.
+      \end{itemize}
+    \item \textbf{Evaluator Models Under Test:} Open-weight architectures spanning Llama 3.1 70B Instruct, DeepSeek-R1 Distill Qwen, and Qwen 3 32B.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Measuring Reliability: Krippendorff's Alpha ($\alpha$)}
+  \begin{itemize}
+    \item \textbf{The Concept:} Unlike raw accuracy, $\alpha$ strictly measures agreement \textit{beyond what is expected by pure chance}, scaling seamlessly across multiple judges and runs.
+    \item \textbf{Adapting to the Task (Distance Semantics):} The metric dynamically adjusts how it penalizes errors based on the dataset format:
+      \begin{itemize}
+        \item \textbf{Nominal (Binary tasks like SummaC):} Treats all rating discrepancies equally as strict mismatches.
+        \item \textbf{Ordinal (Likert scales like SummEval):} Accounts for distance. Rating a 4 vs. 5 is heavily forgiven compared to a catastrophic 1 vs. 5 contradiction.
+      \end{itemize}
+    \item \textbf{The Goal:} A rigorous, uninflated view of how badly a model's judgment drifts between sequential evaluations.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Result 1: Factual Consistency (SummaC)}
+  \begin{itemize}
+    \item \textbf{The Baseline Failure:} Evaluated models consistently struggle to hit the standard $\alpha \ge 0.8$ reliability threshold across separate runs.
+    \item \textbf{The Scale Advantage:} Internal consistency scales explicitly with model size and reasoning power (Qwen 3 $\gg$ DeepSeek-R1 $\gg$ Llama 3.1).
+    \item \textbf{A Fixed Trait:} Volatility is structurally ingrained. Expanding the test sequence from 3 up to 5 runs yields identical reliability coefficients.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Result 2: Multi-Dimensional Metrics (SummEval)}
+  \begin{itemize}
+    \item \textbf{Attribute Sensitivity:} An LLM's stability is heavily dictated by \textit{what} it is scoring, not just its architecture.
+    \item \textbf{Objective vs. Subjective:} Models demonstrate high reliability on structural traits (Consistency, Coherence), but experience a total collapse on subjective traits (Fluency).
+    \item \textbf{Architectural Quirks:} Surprisingly, the smaller Llama 3.1 dramatically outperforms massive reasoning models (R1, Qwen 3) exclusively on Fluency metrics.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Result 3: Multi-Turn Conversations (MT-Bench)}
+  \begin{itemize}
+    \item \textbf{The Complexity Penalty:} Moving from single summaries to multi-turn, interactive conversation ranking drastically slashes chance-corrected agreement.
+    \item \textbf{High Judgment Flip Rate:} Even the most stable model (Qwen 3) contradicted its own preference ranking across sequential runs in nearly \textbf{40\%} of cases.
+    \item \textbf{The Verdict:} Current LLM judges are highly vulnerable to conversational length and structural entropy, making pairwise multi-turn rankings highly volatile.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Result 4: The Temperature Trade-off}
+  \begin{itemize}
+    \item \textbf{The Deterministic Trap:} Setting Temperature to 0 entirely removes internal variance, but it significantly degrades the judge's accuracy against human gold labels.
+    \item \textbf{The Ensemble Fix:} Utilizing active token sampling ($T>0$) and aggregating the 3 runs via a simple \textbf{Majority Vote} yields the highest overall accuracy.
+    \item \textbf{The Takeaway:} Token variance is actually mathematically necessary for optimal alignment. Consensus pooling is superior to forced determinism.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Methodological Strengths \& Insights}
+  \begin{itemize}
+    \item \textbf{Rigorous Formulation:} Successfully shifts the automated evaluation literature from raw alignment heuristics to standard chance-corrected reliability frameworks.
+    \item \textbf{Multi-Dimensional Granularity:} Uncovers critical insight into metric-specific evaluation performance, revealing that structural model alignment varies drastically by attribute type.
+    \item \textbf{Practical Prompt Invariance:} Systematically demonstrates that simple prompt interventions like Chain-of-Thought or Few-Shot examples fail to mitigate underlying self-reliability issues.
+    \item \textbf{Avenue Identification:} Exposes major hidden variance components in widely relied upon evaluation leaderboards.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Open Vulnerabilities \& Practical Limitations}
+  \begin{itemize}
+    \item \textbf{Human Baseline Deficit:} The existing study is structurally unable to establish a human self-reliability upper bound due to complete omission of multi-run annotation data in legacy benchmarks.
+    \item \textbf{Reasoning Path Omission:} The analysis bypasses evaluation of internal reasoning pathways or token log probabilities for explicit generation drift tracking.
+    \item \textbf{Closed-Model Scope Restrictions:} The experimental regime relies entirely on open-weight models, leaving the stability profiles of massive proprietary APIs unmeasured.
+    \item \textbf{Subjectivity Confounding:} Does not decouple inherent human baseline task ambiguity from algorithmic evaluation failure modes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Strategic Recommendations for Automated Evaluation Pipelines}
+  \begin{itemize}
+    \item \textbf{Mandatory Multi-Run Reporting:} Stop publishing single-run LLM evaluation scores; reporting intra-rater reliability statistics must become standard procedure.
+    \item \textbf{Deploy Sampling-Based Consensus Pools:} Replace deterministic single-inference workflows with sampled multi-run pools paired with majority-vote aggregation.
+    \item \textbf{Establish Multi-Annotator Human Benchmarks:} Structure human data gathering pipelines to include repeated ratings of the same item to identify valid performance upper bounds.
+    \item \textbf{Prioritize Chance-Corrected Architecture:} Favor chance-corrected evaluation frameworks like Krippendorff's Alpha over crude percentage overlap metrics.
+  \end{itemize}
+\end{frame}
+
+\end{document}
