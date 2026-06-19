@@ -12,28 +12,35 @@ jobs:
   build-pdf:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Build PDF
-        uses: xu-cheng/latex-action@v3
-        with:
-          working_directory: Phase_1/presentation
-          root_file: main.tex
-
-      - name: Commit PDF
+      - name: Find phases and build PDFs
         run: |
           set -euo pipefail
-          cd Phase_1/presentation
-          if git status --porcelain | grep -qE "\.pdf$"; then
-            git add *.pdf
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "Update presentation PDF [skip ci]"
-            git push
-          else
-            echo "No PDF changes to commit."
-          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          for dir in Phase_*/presentation; do
+            echo "Building $dir"
+
+            if [ -f "$dir/main.tex" ]; then
+              docker run --rm \
+                -v "$PWD":/workdir \
+                -w "/workdir/$dir" \
+                texlive/texlive \
+                latexmk -pdf main.tex
+
+              if git status --porcelain | grep -q "$dir.*\.pdf"; then
+                git add "$dir"/*.pdf
+                git commit -m "Update PDF for $dir [skip ci]" || true
+              fi
+            fi
+          done
+
+          git push
