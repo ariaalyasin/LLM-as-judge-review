@@ -36,7 +36,7 @@ jobs:
                 texlive/texlive \
                 latexmk -pdf main.tex
 
-              if git status --porcelain | grep -q "$dir.*\.pdf"; then
+              if git status --porcelain | grep -q "$dir/.*\.pdf"; then
                 git add "$dir"/*.pdf
                 git commit -m "Update PDF for $dir [skip ci]" || true
               fi
