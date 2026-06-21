@@ -18,24 +18,267 @@
 \author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
 \institute{Sharif University of Technology}
 
-\begin{document}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+% PAPER 6: Limits to Scalable Evaluation at the Frontier
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %%
+
+\begin{frame}[standout]
+  \hypertarget{paper6}{}
+  \Large Paper 6:\\Limits to Scalable Evaluation at the Frontier:\\LLM as Judge Won't Beat Twice the Data
+\end{frame}
+
+\begin{frame}{Motivation: Why LLM-as-a-Judge?}
+  \begin{itemize}
+    \item \textbf{Evaluating LLMs is expensive}: Human annotations are costly; expert evaluations are slow; new models appear rapidly.
+    \item \textbf{Common solution}: Use a strong LLM as judge instead of humans (e.g., MMLU, MT-Bench, safety evaluations, arena comparisons).
+    \item \textbf{Key Question}: \textit{If we use a small amount of ground-truth labels and many LLM judgments, how much annotation effort can we save?}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Judge Bias Matters}
+  \begin{itemize}
+    \item \textbf{Observation}: Even highly accurate judges can produce wrong rankings (e.g., GPT-4, Llama-3 70B as judges).
+    \item \textbf{Main Insight}: High judge accuracy does \textbf{not} guarantee correct scores or correct model rankings.
+    \item \textbf{Takeaway}: LLM judges introduce bias that can significantly distort evaluation.
+  \end{itemize}
+  \vspace{0.5em}
+  \centering
+  \textit{[Figure 1: Why judge bias matters]}
+\end{frame}
+
+\begin{frame}{Formal Setup}
+  \begin{itemize}
+    \item \textbf{Evaluation Components}:
+      \begin{itemize}
+        \item $s$ = Ground-truth score (expensive but correct)
+        \item $\tilde{s}$ = Judge score / proxy score (cheap but biased)
+      \end{itemize}
+    \item \textbf{Data Availability}:
+      \begin{itemize}
+        \item Small number of true labels ($n$)
+        \item Large number of judge labels ($N$)
+      \end{itemize}
+    \item \textbf{Goal}: Estimate true model performance using both sources.
+    \item \textbf{Key Idea}: Debias the proxy scores instead of trusting them directly.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{Key Parameters}
+    \[
+    b(m)=P(s(m)=1)
+    \]
+    \[
+    p(m)=P(\tilde{s}(m)=s(m)\mid s(m)=1)
+    \]
+    \[
+    q(m)=P(\tilde{s}(m)=s(m)\mid s(m)=0)
+    \]
+  \end{block}
+  \begin{itemize}
+    \item $b(m)$: true model performance
+    \item $p(m)$: judge accuracy on positive examples
+    \item $q(m)$: judge accuracy on negative examples
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Agreement Is Not Enough}
+  \begin{itemize}
+    \item \textbf{Common Assumption}: ``The judge agrees with humans 85\% of the time, so it's reliable.'' $\rightarrow$ \textbf{This is insufficient.}
+    \item \textbf{High Agreement $\neq$ Low Bias}: Even when agreement is high, rankings can be wrong and performance estimates can be biased.
+    \item \textbf{Important Message}: Agreement rate alone is a poor measure of judge quality.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{Key Metrics}
+    \[
+    JB(m)=E[\tilde{s}(m)-s(m)]
+    \]
+    \[
+    AG(m)=P(s(m)=\tilde{s}(m))
+    \]
+  \end{block}
+  \begin{itemize}
+    \item $JB(m)$: Judge Bias
+    \item $AG(m)$: Agreement Rate
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+  \Large High\; AG $\not\Rightarrow$ Low\; JB
+  \end{center}
+\end{frame}
+
+\begin{frame}{Debiasing with Prediction Powered Inference (PPI)}
+  \begin{itemize}
+    \item \textbf{Solution}: Prediction Powered Inference (PPI) uses many cheap judge scores and few expensive ground-truth labels.
+    \item \textbf{Intuition}:
+      \begin{enumerate}
+        \item Estimate judge bias on a small labeled set.
+        \item Correct the large proxy dataset.
+        \item Obtain an unbiased estimate.
+      \end{enumerate}
+    \item \textbf{Why It Matters}: PPI is one of the main modern approaches proposed for scalable evaluation.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{PPI Estimator}
+    \[
+    \hat{\theta}_{PP}
+    =
+    \frac1N\sum_{i=n+1}^{N+n}\tilde{s}_i
+    +
+    \frac1n\sum_{j=1}^{n}
+    (s_j-\tilde{s}_j)
+    \]
+  \end{block}
+  \begin{block}{Unbiasedness Guarantee}
+    \[
+    E[\hat{\theta}_{PP}]
+    =
+    E[s]
+    \]
+  \end{block}
+  \begin{itemize}
+    \item First term: uses many cheap labels
+    \item Second term: estimates and corrects the judge bias
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Sample Efficiency and Theorem 5}
+  \begin{itemize}
+    \item \textbf{Main Metric}: Sample Efficiency Factor ($\tau$) --- how many extra ground-truth labels is the debiased estimator effectively worth?
+    \item \textbf{Theorem 5}: The maximum possible improvement depends on the \textbf{correlation} between true labels ($s$) and proxy labels ($\tilde{s}$).
+    \item \textbf{Interpretation}:
+      \begin{itemize}
+        \item Higher correlation $\Rightarrow$ more savings
+        \item Lower correlation $\Rightarrow$ limited gains
+      \end{itemize}
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{Sample Efficiency Upper Bound}
+    \[
+    \tau
+    \le
+    \frac{1}
+    {1-\rho(s,\tilde{s})^2}
+    \]
+  \end{block}
+  \begin{itemize}
+    \item $\rho(s,\tilde{s})$ = Pearson correlation between ground truth and judge score
+    \item Higher correlation $\Rightarrow$ larger possible savings
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Result: Theorem 6 + Corollary 7}
+  \begin{block}{\centering \textbf{Frontier Evaluation Scenario}}
+    We evaluate a model that is \textit{as good as or better than the judge}.
+  \end{block}
+  \vspace{0.5em}
+  \begin{itemize}
+    \item \textbf{Theorem 6}: In this case, correlation is fundamentally limited.
+    \item \textbf{Corollary 7}: Therefore, \textbf{maximum sample efficiency $\leq$ 2}.
+    \item \textbf{Central Message}: \textit{No debiasing method can reduce required ground-truth labels by more than half.}
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{Theorem 6: Correlation Limit}
+    \[
+    \rho(s,\tilde{s})^2 \le 0.5
+    \]
+  \end{block}
+  \begin{block}{Corollary 7: Sample Efficiency Limit}
+    \[
+    \tau
+    \le
+    \frac1{1-0.5}
+    =
+    2
+    \]
+  \end{block}
+  \begin{alertblock}{\centering \textbf{Main Result: $\tau \le 2$}}
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Experimental Results}
+  \begin{itemize}
+    \item \textbf{Experiments}: MMLU and MT-Bench benchmarks.
+    \item \textbf{Findings}: Observed gains are usually below 2$\times$, often much lower.
+    \item \textbf{Only exceed/approach 2$\times$} when very strong judges evaluate much weaker models.
+    \item \textbf{Conclusion}: Experiments support the theoretical prediction.
+  \end{itemize}
+  \vspace{0.5em}
+  \centering
+  \textit{[Figures 2 \& 3: Experimental results]}
+\end{frame}
+
+\begin{frame}{Going Beyond Binary Evaluation}
+  \begin{itemize}
+    \item \textbf{Question}: What if judges output probabilities or confidence scores instead of binary decisions?
+    \item \textbf{Theorem 10}: Even with richer continuous scores, some improvements are possible but the frontier limitation largely remains.
+    \item \textbf{Main Message}: The ``2$\times$ barrier'' is surprisingly robust.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{Theorem 10: Continuous Score Extension}
+    \[
+    SO(R(\tilde{s})) \le b
+    \Rightarrow
+    \rho(s,\tilde{s})^2 \le 0.5
+    \]
+  \end{block}
+  \begin{block}{Implication}
+    \[
+    \tau \le 2
+    \]
+  \end{block}
+  \begin{center}
+    Even with continuous scores, the same practical limit remains.
+  \end{center}
+\end{frame}
+
+\begin{frame}{Conclusions}
+  \begin{itemize}
+    \item \textbf{LLM judges can be biased} and distort rankings.
+    \item \textbf{High agreement does not guarantee} reliable evaluation.
+    \item \textbf{PPI can debias} evaluations, but theoretical limit depends on correlation.
+    \item \textbf{For frontier models}: Maximum gain is roughly a factor of 2.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{\centering}
+    \textit{``LLM-as-a-Judge can help reduce evaluation cost, but it cannot replace large amounts of high-quality ground-truth data when evaluating state-of-the-art models.''}
+  \end{block}
+\end{frame}
+
 \maketitle
 
 \begin{frame}{Table of Contents}
   \begin{enumerate}
-    \item \hyperlink{paper1}{\textbf{Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates}}
-    \item \hyperlink{paper6}{\textbf{Humans or LLMs as the Judge? A Study on Judgement Bias}}
+    \item \hyperlink{paper6}{\textbf{Limits to Scalable Evaluation at the Frontier: LLM as Judge Won't Beat Twice the Data}}
+    \item \hyperlink{paper7}{\textbf{Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates}}
+    \item \hyperlink{paper8}{\textbf{Humans or LLMs as the Judge? A Study on Judgement Bias}}
     \item \hyperlink{paper4}{\textbf{Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks}}
   \end{enumerate}
 \end{frame}
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PAPER 6: Humans or LLMs as the Judge? A Study on Judgement Bias
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% PAPER 8: Humans or LLMs as the Judge? A Study on Judgement Bias
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
 \begin{frame}[standout]
-  \hypertarget{paper6}{}
-  \Large Paper 6:\\Humans or LLMs as the Judge? A Study on Judgement Bias
+  \hypertarget{paper8}{}
+  \Large Paper 8:\\Humans or LLMs as the Judge? A Study on Judgement Bias
+\end{frame}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+% PAPER 8: Humans or LLMs as the Judge? A Study on Judgement Bias
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\begin{frame}[standout]
+  \hypertarget{paper8}{}
+  \Large Paper 8:\\Humans or LLMs as the Judge? A Study on Judgement Bias
+\end{frame}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 8: Humans or LLMs as the Judge? A Study on Judgement Bias
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\begin{frame}[standout]
+  \hypertarget{paper8}{}
+  \Large Paper 8:\\Humans or LLMs as the Judge? A Study on Judgement Bias
 \end{frame}
 
  \begin{frame}{The Reliability Bottleneck}
