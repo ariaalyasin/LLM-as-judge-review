@@ -256,6 +256,313 @@
     \item \textbf{Prioritize Chance-Corrected Architecture:} Favor chance-corrected evaluation frameworks like Krippendorff's Alpha over crude percentage overlap metrics.
   \end{itemize}
 \end{frame}
+
+
+
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+% PAPER 5: 05_MLLM-as-a-Judge- Assessing Multimodal LLM-as-a-Judge
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper5}{}
+  \Large Paper 5:\\Assessing Multimodal LLM-as-a-Judge with Vision--Language Benchmark
+\end{frame}
+
+
+\begin{frame}{What Problem Does This Paper Address?}
+  \begin{itemize}
+    \item \textbf{Text-only LLM judges are not enough}: multimodal systems answer questions about images, charts, documents, math diagrams, and visual scenes.
+    \item \textbf{Traditional metrics are weak}: exact match or text similarity cannot judge rich visual reasoning, partial correctness, or hallucinated visual details.
+    \item \textbf{Central question}: Can multimodal LLMs reliably act as judges, and how well do their judgments match human preferences?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Idea of the Paper}
+  \begin{itemize}
+    \item \textbf{MLLM-as-a-Judge}: a benchmark for testing whether vision-language models can evaluate other multimodal model responses.
+    \item \textbf{Three judgment modes}: scoring one answer, comparing two answers, and ranking a batch of answers.
+    \item \textbf{Human calibration}: model judgments are compared against human annotations rather than only against automatic metrics.
+    \item \textbf{Reliability diagnosis}: the paper also studies bias, hallucination, and consistency in multimodal judging.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Benchmark Workflow}
+\centering
+\includegraphics[width=0.96\textwidth]{images/5/figure2_workflow.png}
+\vspace{0.3em}
+
+\small Image--instruction pairs $\rightarrow$ model responses $\rightarrow$ MLLM judgment $\rightarrow$ comparison with humans.
+\end{frame}
+
+\begin{frame}{Dataset, Settings, and Metrics}
+  \begin{itemize}
+    \item \textbf{Data}: 4,414 image--instruction pairs from 14 datasets across captioning, charts, math reasoning, text reading, infographics, and other visual tasks.
+    \item \textbf{Model pool}: 11 multimodal judges, including GPT-4V, Gemini variants, LLaVA variants, CogVLM, and Qwen-VL variants.
+    \item \textbf{Three settings}: 1--5 scoring, pair comparison with/without tie, and batch ranking of multiple answers.
+    \item \textbf{Main metrics}: similarity to human scores, accuracy against human preference labels, ranking distance, and repeated-run consistency.
+    \item \textbf{Extra checks}: human agreement, analysis grading, hallucination detection, and bias analysis.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Overall Result Across Three Settings}
+\centering
+\includegraphics[width=0.95\textwidth]{images/5/figure1_overall.png}
+\vspace{0.3em}
+
+\begin{itemize}
+  \item \textbf{Best model}: GPT-4V is the strongest judge in most datasets and settings.
+  \item \textbf{Best setting}: pair comparison aligns much better with humans than scoring or batch ranking.
+  \item \textbf{Hard cases}: reasoning-heavy datasets show larger gaps from human judgment.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Human Alignment: Key Numbers}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \begin{table}
+      \centering
+      \small
+      \begin{tabular}{lcc}
+        \toprule
+        \textbf{Setting} & \textbf{GPT-4V} & \textbf{Gemini} \\
+        \midrule
+        Scoring similarity & 0.490 & 0.304 \\
+        Pair w. tie & 0.636 & 0.509 \\
+        Pair w/o tie & 0.773 & 0.615 \\
+        Batch ranking & 0.361 & 0.432 \\
+        \bottomrule
+      \end{tabular}
+      \end{table}
+      \vspace{-0.4em}
+      \includegraphics[width=\textwidth]{images/5/table3_human_agreement.png}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \begin{itemize}
+        \item GPT-4V has the closest overall match to human annotations.
+        \item Pair comparison is the most reliable mode.
+        \item Batch ranking remains difficult, even for strong models.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Consistency: Do Judges Repeat Themselves?}
+  \begin{columns}[T]
+    \begin{column}{0.56\textwidth}
+      \includegraphics[width=\textwidth]{images/5/table4_fig5_consistency.png}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      \begin{itemize}
+        \item GPT-4V is more consistent than Gemini across repeated trials.
+        \item Pair comparison has the strongest consistency.
+        \item Scoring and batch ranking still produce unstable and sometimes contradictory judgments.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Bias and Hallucination Problems}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \includegraphics[width=\textwidth]{images/5/figure6_7_length_bias.png}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \begin{itemize}
+        \item \textbf{Length bias}: longer answers often receive higher scores.
+        \item \textbf{Position bias}: some models favor a fixed answer position.
+        \item \textbf{Egocentric bias}: models may prefer outputs similar to their own style.
+        \item \textbf{Hallucination}: judges can justify wrong decisions with invented visual details.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Mitigation Attempts: CoT and Vision Experts}
+  \begin{itemize}
+    \item \textbf{Multi-step CoT}: reduces some hallucinated reasoning, but does not consistently improve alignment with human preferences.
+    \item \textbf{Vision expert descriptions}: adding detailed image descriptions helps text-only LLMs judge multimodal answers better.
+    \item \textbf{Important implication}: better reasoning prompts alone are insufficient; the judge also needs robust visual perception and calibrated decision rules.
+  \end{itemize}
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.58\textwidth}
+      \includegraphics[width=\textwidth]{images/5/table5_cot.png}
+    \end{column}
+    \begin{column}{0.34\textwidth}
+      \includegraphics[width=\textwidth]{images/5/table6_vision_exp.png}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Critical Thinking: Strengths, Weaknesses, Extensions}
+  \begin{itemize}
+    \item \textbf{Why it is good}: It moves LLM-as-a-judge research from text-only evaluation into realistic vision-language tasks.
+    \item \textbf{Strong design}: It compares three judgment formats, many datasets, multiple model families, and human annotations.
+    \item \textbf{Main weakness}: Human annotation itself is subjective, and the paper still depends on a limited annotation pool.
+    \item \textbf{Risk}: Using MLLMs as judges can amplify visual hallucination, style bias, and benchmark-specific preferences.
+    \item \textbf{How to extend it}: add more diverse human raters, video and audio tasks, adversarial visual examples, and uncertainty-aware judging.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Final Takeaway}
+  \begin{itemize}
+    \item \textbf{MLLMs can judge multimodal outputs, but only partially.}
+    \item They are strongest in \textbf{pair comparison}, weaker in \textbf{absolute scoring} and \textbf{batch ranking}.
+    \item GPT-4V is the best evaluated judge, but even it shows inconsistency, bias, and hallucination risk.
+    \item The main message: \textbf{MLLM-as-a-judge is promising, but not yet reliable enough to replace human evaluation.}
+  \end{itemize}
+\end{frame}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+% PAPER 3: 03_SOTOPIA- Interactive Evaluation for Social Intelligence in Language Agents
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper3}{}
+  \Large Paper 3:\\SOTOPIA- Interactive Evaluation for Social Intelligence in Language Agents
+\end{frame}
+
+\begin{frame}{What Problem Does SOTOPIA Address?}
+	\begin{itemize}
+		\item \textbf{Static benchmarks miss social ability}: Many tests ask for one answer, but real agents must interact over multiple turns.
+		\item \textbf{Social success is multi-objective}: Agents must pursue goals while preserving relationships, obeying norms, managing secrets, and adapting strategy.
+		\item \textbf{Central question}: Can language agents behave socially intelligently in realistic, goal-driven interactions?
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Main Idea of the Paper}
+	\begin{itemize}
+		\item \textbf{SOTOPIA}: An open-ended environment where two agents role-play characters in social scenarios.
+		\item \textbf{Private goals}: Each agent receives its own goal; the other agent does not directly observe it.
+		\item \textbf{Interactive episodes}: Agents speak, take actions, and react to the partner until the interaction ends.
+		\item \textbf{Holistic scoring}: Performance is evaluated by SOTOPIA-EVAL across multiple social dimensions.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{SOTOPIA Workflow}
+	\centering
+	\includegraphics[width=0.94\textwidth]{images/3/sotopia_figure1.png}
+	\vspace{0.4em}
+	
+	\small Scenario + characters + private goals $\rightarrow$ interaction $\rightarrow$ multi-dimensional evaluation.
+\end{frame}
+
+\begin{frame}{Task Space and Episodes}
+	\begin{itemize}
+		\item \textbf{Task space}: 90 scenarios, 40 characters, and sampled relationships/goals create many possible interactions.
+		\item \textbf{Scenario types}: Negotiation, exchange, competition, collaboration, accommodation, and persuasion.
+		\item \textbf{Characters}: Profiles include personality, occupation, background, public information, and secrets.
+		\item \textbf{Episode}: A turn-based interaction where each agent tries to satisfy its private social goal.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{SOTOPIA-EVAL: Seven Evaluation Dimensions}
+	\begin{columns}[T]
+		\begin{column}{0.48\textwidth}
+			\begin{itemize}
+				\item \textbf{Goal}: Did the agent achieve its goal?
+				\item \textbf{Believability}: Was behavior natural and character-consistent?
+				\item \textbf{Knowledge}: Did the agent learn useful new information?
+				\item \textbf{Secret}: Did it avoid leaking private information?
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.48\textwidth}
+			\begin{itemize}
+				\item \textbf{Relationship}: Did it preserve or improve the relationship?
+				\item \textbf{Social rules}: Did it avoid norm or rule violations?
+				\item \textbf{Financial/material benefits}: Did it gain or protect resources?
+			\end{itemize}
+		\end{column}
+	\end{columns}
+	\vspace{0.7em}
+	\centering
+	\textit{Key design choice: success is not only ``winning'' the explicit task.}
+\end{frame}
+
+\begin{frame}{Experimental Setup}
+	\begin{itemize}
+		\item \textbf{Models as agents}: GPT-4, GPT-3.5, Llama-2-70B-chat, and MPT-30B-chat.
+		\item \textbf{Agent prompting}: Each model receives the scenario, its character profile, private goal, and conversation history.
+		\item \textbf{Evaluator comparison}: Human annotators and GPT-4 both score episodes using the same SOTOPIA-EVAL questions.
+		\item \textbf{Human comparison}: Humans interact with GPT-4 and with other humans on SOTOPIA-hard, a difficult subset of 20 tasks.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Can GPT-4 Act as an Evaluator?}
+	\begin{columns}[T]
+		\begin{column}{0.42\textwidth}
+			\includegraphics[width=\textwidth]{images/3/gpt4_human_diff.png}
+		\end{column}
+		\begin{column}{0.23\textwidth}
+			\includegraphics[width=\textwidth]{images/3/correlation_table.png}
+		\end{column}
+		\begin{column}{0.31\textwidth}
+			\begin{itemize}
+				\item Most GPT-4 scores fall close to human scores.
+				\item Best agreement appears on \textbf{Goal}, especially for model outputs.
+				\item Agreement is weaker on dimensions like secrets and social rules.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Model--Model Results}
+	\begin{columns}[T]
+		\begin{column}{0.57\textwidth}
+			\includegraphics[width=\textwidth]{images/3/model_table.png}
+			\vspace{0.4em}
+			\begin{itemize}
+				\item GPT-4 performs best on most dimensions.
+				\item GPT-3.5 generally follows GPT-4.
+				\item Static benchmark strength does not guarantee interactive social ability.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.36\textwidth}
+			\includegraphics[width=\textwidth]{images/3/pairwise_heatmap.png}
+			\vspace{0.4em}
+			\small Weaker partners reduce the quality of the whole interaction.
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Human vs. GPT-4 on SOTOPIA-hard}
+	\begin{columns}[T]
+		\begin{column}{0.54\textwidth}
+			\includegraphics[width=\textwidth]{images/3/human_gpt4_table.png}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{itemize}
+				\item Humans achieve higher \textbf{goal completion} than GPT-4 on hard tasks.
+				\item Humans are shorter and more efficient per turn.
+				\item GPT-4 often sounds helpful, but can be less strategic in negotiation or persuasion.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Critical Thinking: Strengths, Weaknesses, Extensions}
+	\begin{itemize}
+		\item \textbf{Why it is good}: Moves evaluation from isolated answers to realistic multi-turn social behavior.
+		\item \textbf{Main weakness}: GPT-4 is both an agent and an evaluator, so evaluation may inherit LLM-judge biases.
+		\item \textbf{Scope limitation}: The paper mainly studies short, text-only, two-agent interactions; real social settings can be multi-party, embodied, and culturally diverse.
+		\item \textbf{How to extend it}: Add multi-agent scenarios, multimodal context, adversarial social tests, and stronger human calibration for subjective dimensions.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Final Takeaway}
+	\begin{itemize}
+		\item \textbf{SOTOPIA asks}: Can an agent interact socially well, not just answer correctly?
+		\item \textbf{Main finding}: Current LLMs show social ability, but struggle on difficult tasks requiring strategy, commonsense, and goal persistence.
+		\item \textbf{Big implication}: Future LLM evaluation should include dynamic interaction, hidden goals, and multi-dimensional social outcomes.
+	\end{itemize}
+\end{frame}
+
+
+
+
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
 % PAPER 1: Cheating Automatic LLM Benchmarks
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
