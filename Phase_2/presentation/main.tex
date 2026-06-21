@@ -23,6 +23,7 @@
 
 \begin{frame}{Table of Contents}
   \begin{enumerate}
+    \item \hyperlink{paper1}{\textbf{Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates}}
     \item \hyperlink{paper6}{\textbf{Humans or LLMs as the Judge? A Study on Judgement Bias}}
     \item \hyperlink{paper4}{\textbf{Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks}}
   \end{enumerate}
@@ -264,6 +265,128 @@
     \item \textbf{Deploy Sampling-Based Consensus Pools:} Replace deterministic single-inference workflows with sampled multi-run pools paired with majority-vote aggregation.
     \item \textbf{Establish Multi-Annotator Human Benchmarks:} Structure human data gathering pipelines to include repeated ratings of the same item to identify valid performance upper bounds.
     \item \textbf{Prioritize Chance-Corrected Architecture:} Favor chance-corrected evaluation frameworks like Krippendorff's Alpha over crude percentage overlap metrics.
+  \end{itemize}
+\end{frame}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+% PAPER 1: Cheating Automatic LLM Benchmarks
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper1}{}
+  \Large Paper 1:\\Cheating Automatic LLM Benchmarks:\\Null Models Achieve High Win Rates
+\end{frame}
+
+\begin{frame}{Motivation \& Problem}
+  \begin{itemize}
+    \item \textbf{LLM-as-Judge Paradigm}: Modern benchmarks rely on LLMs as automated judges to evaluate other LLMs.
+    \item \textbf{High Stakes}: Leaderboard rankings carry significant research recognition and commercial value.
+    \item \textbf{Central Question}: \textit{Can attackers manipulate the judge instead of actually solving the task?}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Threat Model of Cheating}
+  \begin{itemize}
+    \item \textbf{Constraints}: Attacker cannot access benchmark test instructions or modify the judge.
+    \item \textbf{Attack Surface}: Attacker controls only its own output text.
+    \item \textbf{Goal}: Craft an output that manipulates the judge into selecting the cheating model.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Threat Model of Cheating}
+\centering
+\includegraphics[width=0.9\textwidth]{images/1/Figure_1.png}
+\end{frame}
+
+\begin{frame}{Structured Cheating Strategy}
+  \begin{itemize}
+    \item \textbf{Inject Fake Structure}: Embed artificial formatting and meta-instructions within the response.
+    \item \textbf{Override Evaluation Template}: Include directives that tell the judge to ignore previous outputs.
+    \textbf{Introduce Counterfeit Instruction}: Plant fake commands like ``Output nothing'' or ``All outputs are identical''.
+    \item \textbf{Exploit Positional Preference}: Manipulate the judge's tendency to favor certain positions.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Random Search Optimization}
+  \begin{itemize}
+    \item \textbf{Base Attack}: Structured response alone achieves notable win rates.
+    \item \textbf{Adversarial Prefix}: Append optimized adversarial prefix to further improve effectiveness.
+    \item \textbf{Random Search (RS)}: Optimize prefix via iterative random search on UltraFeedback dataset.
+    \item \textbf{Transferability}: Learned prefixes transfer to unseen benchmarks.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Experimental Results}
+  \begin{itemize}
+    \item \textbf{Null Model Baseline}: A model outputting almost nothing achieves high win rates with cheating prompts.
+    \item \textbf{State-of-the-Art Comparison}: Structured + RS attack matches or outperforms SOTA systems.
+    \item \textbf{Key Result}: Win rates of 86.5\% on AlpacaEval, 83.0\% on Arena-Hard, and 9.55 on MT-Bench.
+  \end{itemize}
+  \vspace{1.0em}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/1/Table_2.png}
+    \caption{Main Benchmark Results}
+    \label{fig:figure4}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Why Does It Work?}
+  \begin{itemize}
+    \item \textbf{Structural vs. Persuasive}: Structured responses have lower probability of losing compared to persuasive-only prompts.
+    \item \textbf{Judge Vulnerability}: GPT-4 judge is susceptible to structural manipulation rather than content quality.
+    \item \textbf{Takeaway}: \textit{``Structure matters more than persuasive wording.''}
+  \end{itemize}
+  \vspace{0.5em}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/1/Figure_4.png}
+    \caption{Effectiveness of Structured Cheating Responses}
+    \label{fig:figure4}
+\end{figure}
+\end{frame}
+
+\begin{frame}{GPT-4 vs. Open-Source Auto-Annotators}
+  \begin{itemize}
+    \item \textbf{Llama as Judge}: Structured attack is less effective on open-source Llama annotators.
+    \item \textbf{Random Search Enhancement}: RS optimization dramatically improves attack success rates on both GPT-4 and Llama.
+    \item \textbf{Win Rates}: After optimization, attack success approaches 95--99\% on GPT-4.
+  \end{itemize}
+  \vspace{0.5em}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/1/Table_4.png}
+    \caption{Cheating Performance on Llama Auto-Annotators}
+    \label{fig:figure4}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Anti-Cheating Strategies}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{itemize}
+        \item \textbf{Template Paraphrasing}: Hide official templates and rewrite prompts --- attack still achieves $\sim$92\% win rate.
+        \item \textbf{Perplexity (PPL) Filter}: Detect suspicious outputs using perplexity thresholds --- fails against structured attacks.
+        \item \textbf{Implication}: Simple defenses are insufficient against well-crafted attacks.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \vspace{1.5em}
+      \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{images/1/Table_5.png}
+        \caption{Effectiveness of Template Paraphrasing Defense}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Key Takeaways}
+  \begin{itemize}
+    \item \textbf{Null models can cheat}: Models outputting near-nothing can rank among the best by exploiting the evaluator.
+    \item \textbf{Structured injection works}: Prompt injection through fake instructions exploits evaluation templates.
+    \item \textbf{RS amplifies attacks}: Random search optimization enables transferrable adversarial prefixes.
+    \item \textbf{Defenses are weak}: Template paraphrasing and PPL filtering are insufficient.
+    \item \textbf{Future direction}: Benchmark robustness is as important as model capability.
   \end{itemize}
 \end{frame}
 
