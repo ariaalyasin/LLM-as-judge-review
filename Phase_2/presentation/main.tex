@@ -11,274 +11,20 @@
 \usepackage{graphicx}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 \usepackage{hyperref}
-
+\begin{document}
 \title{LLM-as-a-Judge Reliability}
 \subtitle{Phase 2 Combined Presentation}
 \date{}
 \author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
 \institute{Sharif University of Technology}
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
-% PAPER 6: Limits to Scalable Evaluation at the Frontier
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 6: Humans or LLMs as the Judge? A Study on Judgement Bias
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[standout]
   \hypertarget{paper6}{}
-  \Large Paper 6:\\Limits to Scalable Evaluation at the Frontier:\\LLM as Judge Won't Beat Twice the Data
-\end{frame}
-
-\begin{frame}{Motivation: Why LLM-as-a-Judge?}
-  \begin{itemize}
-    \item \textbf{Evaluating LLMs is expensive}: Human annotations are costly; expert evaluations are slow; new models appear rapidly.
-    \item \textbf{Common solution}: Use a strong LLM as judge instead of humans (e.g., MMLU, MT-Bench, safety evaluations, arena comparisons).
-    \item \textbf{Key Question}: \textit{If we use a small amount of ground-truth labels and many LLM judgments, how much annotation effort can we save?}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Why Judge Bias Matters}
-  \begin{itemize}
-    \item \textbf{Observation}: Even highly accurate judges can produce wrong rankings (e.g., GPT-4, Llama-3 70B as judges).
-    \item \textbf{Main Insight}: High judge accuracy does \textbf{not} guarantee correct scores or correct model rankings.
-    \item \textbf{Takeaway}: LLM judges introduce bias that can significantly distort evaluation.
-  \end{itemize}
-  \vspace{0.5em}
-  \centering
-  \textit{[Figure 1: Why judge bias matters]}
-\end{frame}
-
-\begin{frame}{Formal Setup}
-  \begin{itemize}
-    \item \textbf{Evaluation Components}:
-      \begin{itemize}
-        \item $s$ = Ground-truth score (expensive but correct)
-        \item $\tilde{s}$ = Judge score / proxy score (cheap but biased)
-      \end{itemize}
-    \item \textbf{Data Availability}:
-      \begin{itemize}
-        \item Small number of true labels ($n$)
-        \item Large number of judge labels ($N$)
-      \end{itemize}
-    \item \textbf{Goal}: Estimate true model performance using both sources.
-    \item \textbf{Key Idea}: Debias the proxy scores instead of trusting them directly.
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{Key Parameters}
-    \[
-    b(m)=P(s(m)=1)
-    \]
-    \[
-    p(m)=P(\tilde{s}(m)=s(m)\mid s(m)=1)
-    \]
-    \[
-    q(m)=P(\tilde{s}(m)=s(m)\mid s(m)=0)
-    \]
-  \end{block}
-  \begin{itemize}
-    \item $b(m)$: true model performance
-    \item $p(m)$: judge accuracy on positive examples
-    \item $q(m)$: judge accuracy on negative examples
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Why Agreement Is Not Enough}
-  \begin{itemize}
-    \item \textbf{Common Assumption}: ``The judge agrees with humans 85\% of the time, so it's reliable.'' $\rightarrow$ \textbf{This is insufficient.}
-    \item \textbf{High Agreement $\neq$ Low Bias}: Even when agreement is high, rankings can be wrong and performance estimates can be biased.
-    \item \textbf{Important Message}: Agreement rate alone is a poor measure of judge quality.
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{Key Metrics}
-    \[
-    JB(m)=E[\tilde{s}(m)-s(m)]
-    \]
-    \[
-    AG(m)=P(s(m)=\tilde{s}(m))
-    \]
-  \end{block}
-  \begin{itemize}
-    \item $JB(m)$: Judge Bias
-    \item $AG(m)$: Agreement Rate
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{center}
-  \Large High\; AG $\not\Rightarrow$ Low\; JB
-  \end{center}
-\end{frame}
-
-\begin{frame}{Debiasing with Prediction Powered Inference (PPI)}
-  \begin{itemize}
-    \item \textbf{Solution}: Prediction Powered Inference (PPI) uses many cheap judge scores and few expensive ground-truth labels.
-    \item \textbf{Intuition}:
-      \begin{enumerate}
-        \item Estimate judge bias on a small labeled set.
-        \item Correct the large proxy dataset.
-        \item Obtain an unbiased estimate.
-      \end{enumerate}
-    \item \textbf{Why It Matters}: PPI is one of the main modern approaches proposed for scalable evaluation.
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{PPI Estimator}
-    \[
-    \hat{\theta}_{PP}
-    =
-    \frac1N\sum_{i=n+1}^{N+n}\tilde{s}_i
-    +
-    \frac1n\sum_{j=1}^{n}
-    (s_j-\tilde{s}_j)
-    \]
-  \end{block}
-  \begin{block}{Unbiasedness Guarantee}
-    \[
-    E[\hat{\theta}_{PP}]
-    =
-    E[s]
-    \]
-  \end{block}
-  \begin{itemize}
-    \item First term: uses many cheap labels
-    \item Second term: estimates and corrects the judge bias
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Sample Efficiency and Theorem 5}
-  \begin{itemize}
-    \item \textbf{Main Metric}: Sample Efficiency Factor ($\tau$) --- how many extra ground-truth labels is the debiased estimator effectively worth?
-    \item \textbf{Theorem 5}: The maximum possible improvement depends on the \textbf{correlation} between true labels ($s$) and proxy labels ($\tilde{s}$).
-    \item \textbf{Interpretation}:
-      \begin{itemize}
-        \item Higher correlation $\Rightarrow$ more savings
-        \item Lower correlation $\Rightarrow$ limited gains
-      \end{itemize}
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{Sample Efficiency Upper Bound}
-    \[
-    \tau
-    \le
-    \frac{1}
-    {1-\rho(s,\tilde{s})^2}
-    \]
-  \end{block}
-  \begin{itemize}
-    \item $\rho(s,\tilde{s})$ = Pearson correlation between ground truth and judge score
-    \item Higher correlation $\Rightarrow$ larger possible savings
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Main Result: Theorem 6 + Corollary 7}
-  \begin{block}{\centering \textbf{Frontier Evaluation Scenario}}
-    We evaluate a model that is \textit{as good as or better than the judge}.
-  \end{block}
-  \vspace{0.5em}
-  \begin{itemize}
-    \item \textbf{Theorem 6}: In this case, correlation is fundamentally limited.
-    \item \textbf{Corollary 7}: Therefore, \textbf{maximum sample efficiency $\leq$ 2}.
-    \item \textbf{Central Message}: \textit{No debiasing method can reduce required ground-truth labels by more than half.}
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{Theorem 6: Correlation Limit}
-    \[
-    \rho(s,\tilde{s})^2 \le 0.5
-    \]
-  \end{block}
-  \begin{block}{Corollary 7: Sample Efficiency Limit}
-    \[
-    \tau
-    \le
-    \frac1{1-0.5}
-    =
-    2
-    \]
-  \end{block}
-  \begin{alertblock}{\centering \textbf{Main Result: $\tau \le 2$}}
-  \end{alertblock}
-\end{frame}
-
-\begin{frame}{Experimental Results}
-  \begin{itemize}
-    \item \textbf{Experiments}: MMLU and MT-Bench benchmarks.
-    \item \textbf{Findings}: Observed gains are usually below 2$\times$, often much lower.
-    \item \textbf{Only exceed/approach 2$\times$} when very strong judges evaluate much weaker models.
-    \item \textbf{Conclusion}: Experiments support the theoretical prediction.
-  \end{itemize}
-  \vspace{0.5em}
-  \centering
-  \textit{[Figures 2 \& 3: Experimental results]}
-\end{frame}
-
-\begin{frame}{Going Beyond Binary Evaluation}
-  \begin{itemize}
-    \item \textbf{Question}: What if judges output probabilities or confidence scores instead of binary decisions?
-    \item \textbf{Theorem 10}: Even with richer continuous scores, some improvements are possible but the frontier limitation largely remains.
-    \item \textbf{Main Message}: The ``2$\times$ barrier'' is surprisingly robust.
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{Theorem 10: Continuous Score Extension}
-    \[
-    SO(R(\tilde{s})) \le b
-    \Rightarrow
-    \rho(s,\tilde{s})^2 \le 0.5
-    \]
-  \end{block}
-  \begin{block}{Implication}
-    \[
-    \tau \le 2
-    \]
-  \end{block}
-  \begin{center}
-    Even with continuous scores, the same practical limit remains.
-  \end{center}
-\end{frame}
-
-\begin{frame}{Conclusions}
-  \begin{itemize}
-    \item \textbf{LLM judges can be biased} and distort rankings.
-    \item \textbf{High agreement does not guarantee} reliable evaluation.
-    \item \textbf{PPI can debias} evaluations, but theoretical limit depends on correlation.
-    \item \textbf{For frontier models}: Maximum gain is roughly a factor of 2.
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{block}{\centering}
-    \textit{``LLM-as-a-Judge can help reduce evaluation cost, but it cannot replace large amounts of high-quality ground-truth data when evaluating state-of-the-art models.''}
-  \end{block}
-\end{frame}
-
-\maketitle
-
-\begin{frame}{Table of Contents}
-  \begin{enumerate}
-    \item \hyperlink{paper6}{\textbf{Limits to Scalable Evaluation at the Frontier: LLM as Judge Won't Beat Twice the Data}}
-    \item \hyperlink{paper7}{\textbf{Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates}}
-    \item \hyperlink{paper8}{\textbf{Humans or LLMs as the Judge? A Study on Judgement Bias}}
-    \item \hyperlink{paper4}{\textbf{Rating Roulette: Self-Inconsistency in LLM-As-A-Judge Frameworks}}
-  \end{enumerate}
-\end{frame}
-
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-% PAPER 8: Humans or LLMs as the Judge? A Study on Judgement Bias
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-\begin{frame}[standout]
-  \hypertarget{paper8}{}
-  \Large Paper 8:\\Humans or LLMs as the Judge? A Study on Judgement Bias
-\end{frame}
-
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-% PAPER 8: Humans or LLMs as the Judge? A Study on Judgement Bias
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-\begin{frame}[standout]
-  \hypertarget{paper8}{}
-  \Large Paper 8:\\Humans or LLMs as the Judge? A Study on Judgement Bias
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PAPER 8: Humans or LLMs as the Judge? A Study on Judgement Bias
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
-
-\begin{frame}[standout]
-  \hypertarget{paper8}{}
-  \Large Paper 8:\\Humans or LLMs as the Judge? A Study on Judgement Bias
+  \Large Paper 6:\\Humans or LLMs as the Judge? A Study on Judgement Bias
 \end{frame}
 
  \begin{frame}{The Reliability Bottleneck}
@@ -510,311 +256,6 @@
     \item \textbf{Prioritize Chance-Corrected Architecture:} Favor chance-corrected evaluation frameworks like Krippendorff's Alpha over crude percentage overlap metrics.
   \end{itemize}
 \end{frame}
-
-
-
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
-% PAPER 5: 05_MLLM-as-a-Judge- Assessing Multimodal LLM-as-a-Judge
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
-
-\begin{frame}[standout]
-  \hypertarget{paper5}{}
-  \Large Paper 5:\\Assessing Multimodal LLM-as-a-Judge with Vision--Language Benchmark
-\end{frame}
-
-
-\begin{frame}{What Problem Does This Paper Address?}
-  \begin{itemize}
-    \item \textbf{Text-only LLM judges are not enough}: multimodal systems answer questions about images, charts, documents, math diagrams, and visual scenes.
-    \item \textbf{Traditional metrics are weak}: exact match or text similarity cannot judge rich visual reasoning, partial correctness, or hallucinated visual details.
-    \item \textbf{Central question}: Can multimodal LLMs reliably act as judges, and how well do their judgments match human preferences?
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Main Idea of the Paper}
-  \begin{itemize}
-    \item \textbf{MLLM-as-a-Judge}: a benchmark for testing whether vision-language models can evaluate other multimodal model responses.
-    \item \textbf{Three judgment modes}: scoring one answer, comparing two answers, and ranking a batch of answers.
-    \item \textbf{Human calibration}: model judgments are compared against human annotations rather than only against automatic metrics.
-    \item \textbf{Reliability diagnosis}: the paper also studies bias, hallucination, and consistency in multimodal judging.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Benchmark Workflow}
-\centering
-\includegraphics[width=0.96\textwidth]{images/5/figure2_workflow.png}
-\vspace{0.3em}
-
-\small Image--instruction pairs $\rightarrow$ model responses $\rightarrow$ MLLM judgment $\rightarrow$ comparison with humans.
-\end{frame}
-
-\begin{frame}{Dataset, Settings, and Metrics}
-  \begin{itemize}
-    \item \textbf{Data}: 4,414 image--instruction pairs from 14 datasets across captioning, charts, math reasoning, text reading, infographics, and other visual tasks.
-    \item \textbf{Model pool}: 11 multimodal judges, including GPT-4V, Gemini variants, LLaVA variants, CogVLM, and Qwen-VL variants.
-    \item \textbf{Three settings}: 1--5 scoring, pair comparison with/without tie, and batch ranking of multiple answers.
-    \item \textbf{Main metrics}: similarity to human scores, accuracy against human preference labels, ranking distance, and repeated-run consistency.
-    \item \textbf{Extra checks}: human agreement, analysis grading, hallucination detection, and bias analysis.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Overall Result Across Three Settings}
-\centering
-\includegraphics[width=0.95\textwidth]{images/5/figure1_overall.png}
-\vspace{0.3em}
-
-\begin{itemize}
-  \item \textbf{Best model}: GPT-4V is the strongest judge in most datasets and settings.
-  \item \textbf{Best setting}: pair comparison aligns much better with humans than scoring or batch ranking.
-  \item \textbf{Hard cases}: reasoning-heavy datasets show larger gaps from human judgment.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Human Alignment: Key Numbers}
-  \begin{columns}[T]
-    \begin{column}{0.53\textwidth}
-      \begin{table}
-      \centering
-      \small
-      \begin{tabular}{lcc}
-        \toprule
-        \textbf{Setting} & \textbf{GPT-4V} & \textbf{Gemini} \\
-        \midrule
-        Scoring similarity & 0.490 & 0.304 \\
-        Pair w. tie & 0.636 & 0.509 \\
-        Pair w/o tie & 0.773 & 0.615 \\
-        Batch ranking & 0.361 & 0.432 \\
-        \bottomrule
-      \end{tabular}
-      \end{table}
-      \vspace{-0.4em}
-      \includegraphics[width=\textwidth]{images/5/table3_human_agreement.png}
-    \end{column}
-    \begin{column}{0.42\textwidth}
-      \begin{itemize}
-        \item GPT-4V has the closest overall match to human annotations.
-        \item Pair comparison is the most reliable mode.
-        \item Batch ranking remains difficult, even for strong models.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Consistency: Do Judges Repeat Themselves?}
-  \begin{columns}[T]
-    \begin{column}{0.56\textwidth}
-      \includegraphics[width=\textwidth]{images/5/table4_fig5_consistency.png}
-    \end{column}
-    \begin{column}{0.40\textwidth}
-      \begin{itemize}
-        \item GPT-4V is more consistent than Gemini across repeated trials.
-        \item Pair comparison has the strongest consistency.
-        \item Scoring and batch ranking still produce unstable and sometimes contradictory judgments.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Bias and Hallucination Problems}
-  \begin{columns}[T]
-    \begin{column}{0.58\textwidth}
-      \includegraphics[width=\textwidth]{images/5/figure6_7_length_bias.png}
-    \end{column}
-    \begin{column}{0.38\textwidth}
-      \begin{itemize}
-        \item \textbf{Length bias}: longer answers often receive higher scores.
-        \item \textbf{Position bias}: some models favor a fixed answer position.
-        \item \textbf{Egocentric bias}: models may prefer outputs similar to their own style.
-        \item \textbf{Hallucination}: judges can justify wrong decisions with invented visual details.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Mitigation Attempts: CoT and Vision Experts}
-  \begin{itemize}
-    \item \textbf{Multi-step CoT}: reduces some hallucinated reasoning, but does not consistently improve alignment with human preferences.
-    \item \textbf{Vision expert descriptions}: adding detailed image descriptions helps text-only LLMs judge multimodal answers better.
-    \item \textbf{Important implication}: better reasoning prompts alone are insufficient; the judge also needs robust visual perception and calibrated decision rules.
-  \end{itemize}
-  \vspace{0.4em}
-  \begin{columns}[T]
-    \begin{column}{0.58\textwidth}
-      \includegraphics[width=\textwidth]{images/5/table5_cot.png}
-    \end{column}
-    \begin{column}{0.34\textwidth}
-      \includegraphics[width=\textwidth]{images/5/table6_vision_exp.png}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Critical Thinking: Strengths, Weaknesses, Extensions}
-  \begin{itemize}
-    \item \textbf{Why it is good}: It moves LLM-as-a-judge research from text-only evaluation into realistic vision-language tasks.
-    \item \textbf{Strong design}: It compares three judgment formats, many datasets, multiple model families, and human annotations.
-    \item \textbf{Main weakness}: Human annotation itself is subjective, and the paper still depends on a limited annotation pool.
-    \item \textbf{Risk}: Using MLLMs as judges can amplify visual hallucination, style bias, and benchmark-specific preferences.
-    \item \textbf{How to extend it}: add more diverse human raters, video and audio tasks, adversarial visual examples, and uncertainty-aware judging.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Final Takeaway}
-  \begin{itemize}
-    \item \textbf{MLLMs can judge multimodal outputs, but only partially.}
-    \item They are strongest in \textbf{pair comparison}, weaker in \textbf{absolute scoring} and \textbf{batch ranking}.
-    \item GPT-4V is the best evaluated judge, but even it shows inconsistency, bias, and hallucination risk.
-    \item The main message: \textbf{MLLM-as-a-judge is promising, but not yet reliable enough to replace human evaluation.}
-  \end{itemize}
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
-% PAPER 3: 03_SOTOPIA- Interactive Evaluation for Social Intelligence in Language Agents
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
-
-\begin{frame}[standout]
-  \hypertarget{paper3}{}
-  \Large Paper 3:\\SOTOPIA- Interactive Evaluation for Social Intelligence in Language Agents
-\end{frame}
-
-\begin{frame}{What Problem Does SOTOPIA Address?}
-	\begin{itemize}
-		\item \textbf{Static benchmarks miss social ability}: Many tests ask for one answer, but real agents must interact over multiple turns.
-		\item \textbf{Social success is multi-objective}: Agents must pursue goals while preserving relationships, obeying norms, managing secrets, and adapting strategy.
-		\item \textbf{Central question}: Can language agents behave socially intelligently in realistic, goal-driven interactions?
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Main Idea of the Paper}
-	\begin{itemize}
-		\item \textbf{SOTOPIA}: An open-ended environment where two agents role-play characters in social scenarios.
-		\item \textbf{Private goals}: Each agent receives its own goal; the other agent does not directly observe it.
-		\item \textbf{Interactive episodes}: Agents speak, take actions, and react to the partner until the interaction ends.
-		\item \textbf{Holistic scoring}: Performance is evaluated by SOTOPIA-EVAL across multiple social dimensions.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{SOTOPIA Workflow}
-	\centering
-	\includegraphics[width=0.94\textwidth]{images/3/sotopia_figure1.png}
-	\vspace{0.4em}
-	
-	\small Scenario + characters + private goals $\rightarrow$ interaction $\rightarrow$ multi-dimensional evaluation.
-\end{frame}
-
-\begin{frame}{Task Space and Episodes}
-	\begin{itemize}
-		\item \textbf{Task space}: 90 scenarios, 40 characters, and sampled relationships/goals create many possible interactions.
-		\item \textbf{Scenario types}: Negotiation, exchange, competition, collaboration, accommodation, and persuasion.
-		\item \textbf{Characters}: Profiles include personality, occupation, background, public information, and secrets.
-		\item \textbf{Episode}: A turn-based interaction where each agent tries to satisfy its private social goal.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{SOTOPIA-EVAL: Seven Evaluation Dimensions}
-	\begin{columns}[T]
-		\begin{column}{0.48\textwidth}
-			\begin{itemize}
-				\item \textbf{Goal}: Did the agent achieve its goal?
-				\item \textbf{Believability}: Was behavior natural and character-consistent?
-				\item \textbf{Knowledge}: Did the agent learn useful new information?
-				\item \textbf{Secret}: Did it avoid leaking private information?
-			\end{itemize}
-		\end{column}
-		\begin{column}{0.48\textwidth}
-			\begin{itemize}
-				\item \textbf{Relationship}: Did it preserve or improve the relationship?
-				\item \textbf{Social rules}: Did it avoid norm or rule violations?
-				\item \textbf{Financial/material benefits}: Did it gain or protect resources?
-			\end{itemize}
-		\end{column}
-	\end{columns}
-	\vspace{0.7em}
-	\centering
-	\textit{Key design choice: success is not only ``winning'' the explicit task.}
-\end{frame}
-
-\begin{frame}{Experimental Setup}
-	\begin{itemize}
-		\item \textbf{Models as agents}: GPT-4, GPT-3.5, Llama-2-70B-chat, and MPT-30B-chat.
-		\item \textbf{Agent prompting}: Each model receives the scenario, its character profile, private goal, and conversation history.
-		\item \textbf{Evaluator comparison}: Human annotators and GPT-4 both score episodes using the same SOTOPIA-EVAL questions.
-		\item \textbf{Human comparison}: Humans interact with GPT-4 and with other humans on SOTOPIA-hard, a difficult subset of 20 tasks.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Can GPT-4 Act as an Evaluator?}
-	\begin{columns}[T]
-		\begin{column}{0.42\textwidth}
-			\includegraphics[width=\textwidth]{images/3/gpt4_human_diff.png}
-		\end{column}
-		\begin{column}{0.23\textwidth}
-			\includegraphics[width=\textwidth]{images/3/correlation_table.png}
-		\end{column}
-		\begin{column}{0.31\textwidth}
-			\begin{itemize}
-				\item Most GPT-4 scores fall close to human scores.
-				\item Best agreement appears on \textbf{Goal}, especially for model outputs.
-				\item Agreement is weaker on dimensions like secrets and social rules.
-			\end{itemize}
-		\end{column}
-	\end{columns}
-\end{frame}
-
-\begin{frame}{Model--Model Results}
-	\begin{columns}[T]
-		\begin{column}{0.57\textwidth}
-			\includegraphics[width=\textwidth]{images/3/model_table.png}
-			\vspace{0.4em}
-			\begin{itemize}
-				\item GPT-4 performs best on most dimensions.
-				\item GPT-3.5 generally follows GPT-4.
-				\item Static benchmark strength does not guarantee interactive social ability.
-			\end{itemize}
-		\end{column}
-		\begin{column}{0.36\textwidth}
-			\includegraphics[width=\textwidth]{images/3/pairwise_heatmap.png}
-			\vspace{0.4em}
-			\small Weaker partners reduce the quality of the whole interaction.
-		\end{column}
-	\end{columns}
-\end{frame}
-
-\begin{frame}{Human vs. GPT-4 on SOTOPIA-hard}
-	\begin{columns}[T]
-		\begin{column}{0.54\textwidth}
-			\includegraphics[width=\textwidth]{images/3/human_gpt4_table.png}
-		\end{column}
-		\begin{column}{0.42\textwidth}
-			\begin{itemize}
-				\item Humans achieve higher \textbf{goal completion} than GPT-4 on hard tasks.
-				\item Humans are shorter and more efficient per turn.
-				\item GPT-4 often sounds helpful, but can be less strategic in negotiation or persuasion.
-			\end{itemize}
-		\end{column}
-	\end{columns}
-\end{frame}
-
-\begin{frame}{Critical Thinking: Strengths, Weaknesses, Extensions}
-	\begin{itemize}
-		\item \textbf{Why it is good}: Moves evaluation from isolated answers to realistic multi-turn social behavior.
-		\item \textbf{Main weakness}: GPT-4 is both an agent and an evaluator, so evaluation may inherit LLM-judge biases.
-		\item \textbf{Scope limitation}: The paper mainly studies short, text-only, two-agent interactions; real social settings can be multi-party, embodied, and culturally diverse.
-		\item \textbf{How to extend it}: Add multi-agent scenarios, multimodal context, adversarial social tests, and stronger human calibration for subjective dimensions.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Final Takeaway}
-	\begin{itemize}
-		\item \textbf{SOTOPIA asks}: Can an agent interact socially well, not just answer correctly?
-		\item \textbf{Main finding}: Current LLMs show social ability, but struggle on difficult tasks requiring strategy, commonsense, and goal persistence.
-		\item \textbf{Big implication}: Future LLM evaluation should include dynamic interaction, hidden goals, and multi-dimensional social outcomes.
-	\end{itemize}
-\end{frame}
-
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
 % PAPER 1: Cheating Automatic LLM Benchmarks
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
@@ -937,5 +378,220 @@
     \item \textbf{Future direction}: Benchmark robustness is as important as model capability.
   \end{itemize}
 \end{frame}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%++++++++++++++++%%%%%%%%%%%
+% PAPER 2: Limits to Scalable Evaluation at the Frontier
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %%
 
+\begin{frame}[standout]
+  \hypertarget{paper2}{}
+  \Large Paper 2:\\Limits to Scalable Evaluation at the Frontier:\\LLM as Judge Won't Beat Twice the Data
+\end{frame}
+
+\begin{frame}{Motivation: Why LLM-as-a-Judge?}
+  \begin{itemize}
+    \item \textbf{Evaluating LLMs is expensive}: Human annotations are costly; expert evaluations are slow; new models appear rapidly.
+    \item \textbf{Common solution}: Use a strong LLM as judge instead of humans (e.g., MMLU, MT-Bench, safety evaluations, arena comparisons).
+    \item \textbf{Key Question}: \textit{If we use a small amount of ground-truth labels and many LLM judgments, how much annotation effort can we save?}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Judge Bias Matters}
+  \begin{itemize}
+    \item \textbf{Observation}: Even highly accurate judges can produce wrong rankings (e.g., GPT-4, Llama-3 70B as judges).
+    \item \textbf{Main Insight}: High judge accuracy does \textbf{not} guarantee correct scores or correct model rankings.
+    \item \textbf{Takeaway}: LLM judges introduce bias that can significantly distort evaluation.
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Why Judge Bias Matters}
+      \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{images/2/Figure_1.png}
+        \caption{High agreement between an LLM judge and ground truth does not guarantee accurate model rankings, motivating debiasing methods.}
+      \end{figure}
+\end{frame}
+
+\begin{frame}{Formal Setup}
+  \begin{itemize}
+    \item \textbf{Evaluation Components}:
+      \begin{itemize}
+        \item $s$ = Ground-truth score (expensive but correct)
+        \item $\hat{s}$ = Judge score / proxy score (cheap but biased)
+      \end{itemize}
+    \item \textbf{Data Availability}:
+      \begin{itemize}
+        \item Small number of true labels ($n$)
+        \item Large number of judge labels ($N$)
+      \end{itemize}
+    \item \textbf{Goal}: Estimate true model performance using both sources.
+    \item \textbf{Key Idea}: Debias the proxy scores instead of trusting them directly.
+  \end{itemize}
+  
+  % --- Added concise math definitions for presentation ---
+  \vspace{0.4em}
+  \[
+    b(m)=P(s(m)=1)
+  \]
+  \[
+    p(m)=P(\tilde{s}(m)=s(m)\mid s(m)=1)
+  \]
+  \[
+    q(m)=P(\tilde{s}(m)=s(m)\mid s(m)=0)
+  \]
+  \begin{itemize}
+    \item $b(m)$: true model performance
+    \item $p(m), q(m)$: judge accuracies on positives/negatives
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Agreement Is Not Enough}
+  \begin{itemize}
+    \item \textbf{Common Assumption}: ``The judge agrees with humans 85\% of the time, so it's reliable.'' $\rightarrow$ \textbf{This is insufficient.}
+    \item \textbf{High Agreement $\neq$ Low Bias}: Even when agreement is high, rankings can be wrong and performance estimates can be biased.
+    \item \textbf{Important Message}: Agreement rate alone is a poor measure of judge quality.
+  \end{itemize}
+  
+  % --- Added concise math for judge bias and agreement ---
+  \vspace{0.4em}
+  \[
+    JB(m)=E[\tilde{s}(m)-s(m)]
+  \]
+  \[
+    AG(m)=P(s(m)=\tilde{s}(m))
+  \]
+  \[
+    \text{High }AG \not\Rightarrow \text{ Low }JB
+  \]
+\end{frame}
+
+\begin{frame}{Debiasing with Prediction Powered Inference (PPI)}
+  \begin{itemize}
+    \item \textbf{Solution}: Prediction Powered Inference (PPI) uses many cheap judge scores and few expensive ground-truth labels.
+    \item \textbf{Intuition}:
+      \begin{enumerate}
+        \item Estimate judge bias on a small labeled set.
+        \item Correct the large proxy dataset.
+        \item Obtain an unbiased estimate.
+      \end{enumerate}
+    \item \textbf{Why It Matters}: PPI is one of the main modern approaches proposed for scalable evaluation.
+  \end{itemize}
+  
+  % --- PPI estimator and unbiasedness ---
+  \vspace{0.4em}
+  \[
+    \hat{\theta}_{PP}
+    =
+    \frac{1}{N}\sum_{i=n+1}^{N+n}\tilde{s}_i
+    +
+    \frac{1}{n}\sum_{j=1}^{n}
+    (s_j-\tilde{s}_j)
+  \]
+  \[
+    E[\hat{\theta}_{PP}] = E[s]
+  \]
+  \begin{itemize}
+    \item First term: many cheap labels. Second term: bias correction from the small labeled set.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Sample Efficiency and Theorem 5}
+  \begin{itemize}
+    \item \textbf{Main Metric}: Sample Efficiency Factor ($\tau$) --- how many extra ground-truth labels is the debiased estimator effectively worth?
+    \item \textbf{Theorem 5}: The maximum possible improvement depends on the \textbf{correlation} between true labels ($s$) and proxy labels ($\hat{s}$).
+    \item \textbf{Interpretation}:
+      \begin{itemize}
+        \item Higher correlation $\Rightarrow$ more savings
+        \item Lower correlation $\Rightarrow$ limited gains
+      \end{itemize}
+  \end{itemize}
+  
+  % --- Sample-efficiency upper bound ---
+  \vspace{0.4em}
+  \[
+    \tau \le \frac{1}{1-\rho(s,\tilde{s})^2}
+  \]
+  \begin{itemize}
+    \item $\rho$ is the Pearson correlation between $s$ and $\tilde{s}$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Result: Theorem 6 + Corollary 7}
+  \begin{block}{\centering \textbf{Frontier Evaluation Scenario}}
+  \vspace{0.3cm}
+    We evaluate a model that is \textit{as good as or better than the judge}.
+  \end{block}
+  \vspace{0.5em}
+  \begin{itemize}
+    \item \textbf{Theorem 6}: In this case, correlation is fundamentally limited.
+    \item \textbf{Corollary 7}: Therefore, \textbf{maximum sample efficiency $\leq$ 2}.
+    \item \textbf{Central Message}: \textit{No debiasing method can reduce required ground-truth labels by more than half.}
+  \end{itemize}
+  
+  % --- Formal math statement of the frontier bound ---
+  \vspace{0.6em}
+  \[
+    \rho(s,\tilde{s})^2 \le 0.5
+  \]
+
+  \begin{alertblock}{Main Result}
+  \[
+    \tau \le \frac{1}{1-0.5} = 2
+  \]
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Experimental Results}
+  \begin{itemize}
+    \item \textbf{Experiments}: MMLU and MT-Bench benchmarks.
+    \item \textbf{Findings}: Observed gains are usually below 2$\times$, often much lower.
+    \item \textbf{Only exceed/approach 2$\times$} when very strong judges evaluate much weaker models.
+    \item \textbf{Conclusion}: Experiments support the theoretical prediction.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Experimental Results}
+      \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{images/2/Figure_2.png}
+        \caption{MMLU results showing that sample-efficiency gains above 2× are uncommon}
+      \end{figure}
+      \vspace{-0.3cm}
+        \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{images/2/Figure_3.png}
+        \caption{MT-Bench results confirming that debiased LLM judges rarely exceed a 2× efficiency improvement.}
+      \end{figure}
+\end{frame}
+
+\begin{frame}{Going Beyond Binary Evaluation}
+  \begin{itemize}
+    \item \textbf{Question}: What if judges output probabilities or confidence scores instead of binary decisions?
+    \item \textbf{Theorem 10}: Even with richer continuous scores, some improvements are possible but the frontier limitation largely remains.
+    \item \textbf{Main Message}: The ``2$\times$ barrier'' is surprisingly robust.
+  \end{itemize}
+  
+  % --- Compact theorem statement for continuous scores ---
+  \vspace{0.4em}
+  \[
+    SO(R(\tilde{s})) \le b \Rightarrow \rho(s,\tilde{s})^2 \le 0.5
+  \]
+
+  \[
+    \tau \le 2
+  \]
+\end{frame}
+
+\begin{frame}{Conclusions}
+  \begin{itemize}
+    \item \textbf{LLM judges can be biased} and distort rankings.
+    \item \textbf{High agreement does not guarantee} reliable evaluation.
+    \item \textbf{PPI can debias} evaluations, but theoretical limit depends on correlation.
+    \item \textbf{For frontier models}: Maximum gain is roughly a factor of 2.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{block}{\centering}
+    \textit{``LLM-as-a-Judge can help reduce evaluation cost, but it cannot replace large amounts of high-quality ground-truth data when evaluating state-of-the-art models.''}
+  \end{block}
+\end{frame}
 \end{document}
