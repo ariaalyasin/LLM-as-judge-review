@@ -11,15 +11,194 @@
 \usepackage{graphicx}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 \usepackage{hyperref}
-\begin{document}
+
 \title{LLM-as-a-Judge Reliability}
 \subtitle{Phase 3 Combined Presentation}
 \date{}
 \author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
 \institute{Sharif University of Technology}
 
-\begin{frame}
-\titlepage
+\begin{document}
+
+\maketitle
+
+\section{Category 1: Benchmarks \& Frameworks for Judges}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 3: M-Prometheus: A Suite of Open Multilingual LLM Judges
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper3}{}
+  \Large Paper 3:\\M-Prometheus: A Suite of Open Multilingual LLM Judges
+\end{frame}
+
+\begin{frame}{Introduction \& Category Alignment}
+  \begin{itemize}
+    \item \textbf{Category Context}: Research dedicated to creating standardized testing grounds to evaluate the evaluators themselves.
+    \item \textbf{Core Objective}: Quantifying accuracy, consistency, and human-alignment of LLM judges across complex, non-English evaluation tasks.
+    \item \textbf{Target Study}: Dissecting M-PROMETHEUS, a suite of open-weight multilingual LLM judges ranging from 3B to 14B parameters.
+    \item \textbf{Practical Impact}: Bridging the severe automatic evaluation quality gap between English and non-English target languages.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The Multilingual Evaluation Gap}
+  \begin{itemize}
+    \item \textbf{The English-Centric Bias}: Most high-performance LLM-as-a-judge frameworks are optimized exclusively for English text processing.
+    \item \textbf{Systematic Disparity}: Lack of reliable non-English evaluators creates a bottleneck, directly hindering the development of robust multilingual models.
+    \item \textbf{Baseline Flaws}: Prior open-source multi-lingual attempts fail to support complex pairwise comparisons or inherit brittle capabilities solely from base pretraining.
+    \item \textbf{Automatic Metric Failure}: Traditional scalar metrics like BLEU or COMET fail to provide explanatory, text-based reasoning for qualitative decisions.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{M-PROMETHEUS Architecture \& Training Recipe}
+  \begin{itemize}
+    \item \textbf{Model Foundation}: Built by fine-tuning state-of-the-art Qwen2.5-Instruct models across 3B, 7B, and 14B parameter scales.
+    \item \textbf{Synthetic Paradigm}: Completely bypasses translated text training data, instead leveraging native multilingual feedback synthesized from scratch.
+    \item \textbf{Data Infusion Strategy}: Combines massive custom-generated direct assessment and pairwise preference collections with cross-lingual machine translation eval data.
+    \item \textbf{Dual Capability Mode}: Explicitly trained to operate flexibly across both reference-based and reference-free evaluation scenarios.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Methodology Pipeline \& Comparison}
+  % TODO SCREENSHOT: [Extract Figure 1 from the paper showing the M-PROMETHEUS capability comparison matrix and save it as images/1/pipeline.png]
+  \begin{center}
+    \includegraphics[width=0.95\textwidth]{images/3/pipeline.png}
+  \end{center}
+\end{frame}
+
+\begin{frame}{State-of-the-Art Evaluation Results}
+  \begin{itemize}
+    \item \textbf{General Benchmark Dominance}: Outperforms all existing open-weight judges on comprehensive multilingual reward benchmarks covering over 20 languages.
+    \item \textbf{Surpassing Proprietary Frontiers}: The 14B parameter model successfully outperforms massive closed-source baselines like GPT-4o on MM-Eval.
+    \item \textbf{Literary Translation Excellence}: Demonstrates extreme precision on book excerpt translations, a cross-lingual domain where specialized metrics fail.
+    \item \textbf{Generative Quality Amplification}: Directly enhances inference-time output accuracy through quality-aware decoding and selection mechanisms.
+  \end{itemize}
+\end{frame}
+
+% \begin{frame}{Empirical Performance Matrix}
+%   % TODO SCREENSHOT: [Extract Table 1 from the paper showing the accuracy on general-purpose benchmarks, LitEval, and QAD and save it as images/1/results.png]
+%   \begin{center}
+%     \includegraphics[width=0.85\textwidth]{images/3/results.png}
+%   \end{center}
+% \end{frame}
+
+\begin{frame}{Core Framework Strengths}
+  \begin{itemize}
+    \item \textbf{SOTA Multilingual Benchmarking}: Delivers unmatched evaluation performance against both open-weight and proprietary models in massive non-English ecosystems.
+    \item \textbf{Cross-Task Knowledge Transfer}: Demonstrates that integrating machine translation data significantly boosts a judge's general ability to detect language hallucinations.
+    \item \textbf{Compute Efficiency at Scale}: Smaller variants like the 3B model deliver massive performance gains relative to their size, making localized deployment practical.
+    \item \textbf{Native Capability Preservation}: Drastically enhances multilingual capabilities without degrading core performance or reliability on English benchmarks.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Operational Limitations}
+  \begin{itemize}
+    \item \textbf{Diminishing Returns on Scale}: Increasing parameter size to 14B yields structural improvements in theory, but lags behind smaller scales during active decoding tasks.
+    \item \textbf{Language Saturation Constraints}: Directly optimized on only 6 language streams, relying heavily on the base model's zero-shot generalization for other target domains.
+    \item \textbf{Explanatory Feedback Asymmetry}: While highly reliable at processing non-English prompts and inputs, the default long-form textual rationale remains written in English.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Critical Strategic Outlook}
+  \begin{itemize}
+    \item \textbf{Data Engineering Shift}: Establishes native synthetic multi-lingual generation as a fundamentally superior alternative to translating preexisting English datasets.
+    \item \textbf{Active Model Development}: Transforms the judge from a passive post-hoc benchmarking script into an active, inference-time text-improvement engine.
+    \item \textbf{Future Framework Evolution}: Future reliability paradigms must integrate localized non-English explanation chains and native multi-lingual reasoning paths.
+  \end{itemize}
+\end{frame}
+
+\section{Category 2: Bias Quantification \& Fairness Analysis}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 5: Any Large Language Model Can Be a Reliable Judge:Debiasing with a Reasoning-based Bias Detector
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper5}{}
+  \Large Paper 5:\\Any Large Language Model Can Be a Reliable Judge:Debiasing with a Reasoning-based Bias Detector
+\end{frame}
+
+\begin{frame}{The Reliability Bottleneck: Systemic Pitfalls}
+  \begin{itemize}
+    \item \textbf{Category Context}: Isolating and quantifying systemic prejudices (position, verbosity, bandwagon, and sentiment biases) that undermine automated trust.
+    \item \textbf{Four Structural Vulnerabilities Under Analysis}:
+      \begin{itemize}
+        \item \textbf{Verbosity Bias}: Prioritizing longer, low-quality answers over concise, mathematically accurate ones.
+        \item \textbf{Position Bias}: Inherent preference for choices based on their order slot.
+        \item \textbf{Bandwagon Bias}: Vulnerability to fabricated majority consensus indicators.
+        \item \textbf{Sentiment Bias}: Distorting scores based on enthusiastic stylistic tone.
+      \end{itemize}
+    \item \textbf{Flaws of Existing Methods}: In-context prompting cannot break deep-seated cognitive patterns, while direct fine-tuning is impossible for closedendpoints.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Dataset Construction \& Distilled SFT Pipeline}
+  \begin{itemize}
+    \item \textbf{Source Corpus Foundation}: Built upon curated samples from GSM8K (math), Arena (chat instruction pairs), and ScienceQA (multimodal science).
+    \item \textbf{Data Curation Pipeline}:
+      \begin{itemize}
+        \item Pairwise sets are modified to introduce targeted skews (e.g., stripping reasoning steps for verbosity, swapping choice order for position).
+        \item Ground-truth bias labels are mathematically computed by comparing biased evaluations against control judgments.
+      \end{itemize}
+    \item \textbf{Reasoning Distillation Training Loop}:
+      \begin{itemize}
+        \item A high-capacity Teacher LRM generates 1.67k expert reasoning traces explaining the flaws behind the judge's mistakes.
+        \item Hard validation filtering retains only traces matching the ground-truth label.
+        \item Base reasoning models (1.5B to 14B scales) undergo Supervised Fine-Tuning (SFT) jointly on all four bias types to learn core logical reasoning.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{RBD Framework Pipeline Overview}
+  % TODO SCREENSHOT: [Extract Figure 1 from the paper showing the Data Collection, RBD Training, and RBD Inference workflow pipeline and save it as images/1/pipeline.png]
+  \begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/5/pipeline.png}
+    \caption{The end-to-end framework layout demonstrating dataset generation, validation filtering, and iterative feedback-driven self-correction loops.}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Quantitative Evaluation \& Key Results}
+  \begin{itemize}
+    \item \textbf{Empirical Baseline Improvement}: Evaluated across 8 premier judges (GPT-4o, Claude-3.5, DeepSeek-V3, and LLaMA-3.1 series).
+    \item \textbf{Core Performance Metrics}:
+      \begin{itemize}
+        \item Integrating RBD-8B boosts evaluation accuracy by an average of \textbf{18.5\%} and consistency by \textbf{10.9\%}.
+        \item Outperforms prompt-based baselines by \textbf{12.8\%} and out-of-the-box fine-tuned judge models by \textbf{17.2\%}.
+        \item Smaller engines see massive jumps; LLaMA-3.1-8B accuracy surges up to \textbf{71.8\%} on verbosity mitigation.
+      \end{itemize}
+    \item \textbf{Stress Testing \& Scalability}:
+      \begin{itemize}
+        \item Scaling the RBD from 1.5B to 14B steadily enhances average accuracy gains (+6.5\% to +15.4\%).
+        \item Successfully mitigates multi-bias scenarios, securing recovery gains of +45\% and +63.8\% under overlapping vulnerabilities.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Core Framework Strengths}
+  \begin{itemize}
+    \item \textbf{True Cognitive Understanding}: Avoids exploiting synthetic data shortcuts by enforcing full paragraph-level comparative analysis before outputting labels.
+    \item \textbf{Universal Agnostic Integration}: Operates entirely via text, facilitating seamless decoupling and deployment alongside proprietary, black-box commercial APIs.
+    \item \textbf{Cross-Domain Generalization}: Maintains peak performance on unseen benchmarks (LLMBar, JudgeBench) and new domains (FactQA) without task-specific training.
+    \item \textbf{Negligible Resource Overhead}: Leveraging optimized inference backends achieves an ultra-low latency of 1.5 seconds per sample.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Operational Limitations}
+  \begin{itemize}
+    \item \textbf{Cumulative Compute Cost}: While single-sample costs are fractional, multi-round iteration introduces cost aggregation when scaled across millions of requests.
+    \item \textbf{Structural Constraint Scope}: Heavily tuned for multiple-choice and pairwise layouts; it does not natively adapt to purely open-ended generation score sheets.
+    \item \textbf{Social Blind Spots}: Focuses strictly on surface-level format skews; it cannot explicitly target embedded demographic, cultural, or gender-based social biases.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Critical Strategic Outlook}
+  \begin{itemize}
+    \item \textbf{The Scaled Stubbornness Trap}: Larger frontier models possess high internal certainty, making them structurally more stubborn and resistant to external correction.
+    \item \textbf{The Authoritative Distillation Flaw}: Distilled, lightweight engines inherit the highly assertive tone of parents, masking an inability to deeply analyze foundational logic.
+    \item \textbf{Future Paradigm Re-alignment}: Automated reliability cannot rely on internal alignment; trustworthy grading demands a hard transition toward decoupled, multi-agent referee structures.
+  \end{itemize}
 \end{frame}
 
 \end{document}
