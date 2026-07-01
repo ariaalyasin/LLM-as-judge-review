@@ -527,4 +527,144 @@ between win-rates}
 \end{frame}
 
 
+
+\section{Category 4: Structured Evaluation Protocols}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 1: RocketEval: Efficient Automated LLM Evaluation via Grading Checklist
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper1}{}
+  \Large Paper 1:\\RocketEval: Efficient Automated LLM Evaluation via Grading Checklist
+\end{frame}
+
+\begin{frame}{RocketEval: Motivation}
+  \begin{itemize}
+    \item \textbf{Problem}: GPT-4-class judges are useful but expensive, API-dependent, private, and hard to reproduce.
+    \item \textbf{Observation}: Small open models fail mostly because they miss detailed analysis, not because they cannot answer simple checks.
+    \item \textbf{Core Idea}: Convert one broad evaluation into many narrow checklist questions.
+    \item \textbf{Goal}: Make a lightweight local judge reliable enough for scalable open-ended evaluation.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Small Judges Fail}
+  \begin{itemize}
+    \item Direct CoT judging still leaves weak models uncertain and inconsistent.
+    \item Two dominant error sources are \textbf{high uncertainty} and \textbf{position bias}.
+    \item RocketEval reduces the task from ``give a global score'' to ``verify checklist items.''
+    \item This makes judging more interpretable: every final score has item-level evidence.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{RocketEval Framework}
+  \begin{center}
+    \includegraphics[width=0.96\textwidth]{images/1/framework.png}
+  \end{center}
+  \vspace{-0.15cm}
+  \begin{itemize}
+    \item Three stages: checklist creation, checklist grading, score prediction.
+    \item The pipeline separates \emph{criterion design} from \emph{criterion verification}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Method: Checklist QA Instead of Global Judgment}
+  \begin{itemize}
+    \item \textbf{Checklist creation}: generate focused criteria for correctness, completeness, relevance, and instruction-following.
+    \item \textbf{Checklist grading}: ask the lightweight judge whether each criterion is satisfied.
+    \item \textbf{Score prediction}: average item scores, or learn weights from supervised labels.
+  \end{itemize}
+  \[
+    \hat{p}=\frac{p_\theta(\text{Yes}\mid x,y,c)}{p_\theta(\text{Yes}\mid x,y,c)+p_\theta(\text{No}\mid x,y,c)}
+  \]
+\end{frame}
+
+\begin{frame}{Key Result: Small Judges Become Competitive}
+  \begin{center}
+    \includegraphics[width=0.92\textwidth]{images/1/results.png}
+  \end{center}
+  \vspace{-0.1cm}
+  \begin{itemize}
+    \item RocketEval improves many small judges over ordinary CoT judging.
+    \item With Gemma-2-2B, it reports \textbf{0.965} correlation with human preferences and over \textbf{50$\times$} cost reduction.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Critical Review \& Bridge to Paper 2}
+  \begin{itemize}
+    \item \textbf{Strength}: transparent item-level evidence; cheaper and more reproducible than closed judge APIs.
+    \item \textbf{Limitation}: checklist quality still depends on a strong generator; weak or biased checklists can mislead the judge.
+    \item \textbf{Limitation}: supervised reweighting still needs reliable labels.
+    \item \textbf{Bridge}: Paper 1 improves \emph{structured criteria}; Paper 2 improves \emph{comparative reasoning coverage}.
+  \end{itemize}
+\end{frame}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 2: Crowd Comparative Reasoning
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper2}{}
+  \Large Paper 2:\\Crowd Comparative Reasoning\newline Unlocking Comprehensive Evaluations for LLM-as-a-Judge
+\end{frame}
+
+\begin{frame}{Paper 2: Motivation}
+  \begin{itemize}
+    \item \textbf{Problem}: LLM judges often produce incomplete CoT judgments when comparing only two candidate answers.
+    \item \textbf{Why it matters}: shallow reasoning misses subtle differences and can produce unreliable preferences.
+    \item \textbf{Existing fixes}: majority voting and longer rubrics help, but they are either costly or response-unaware.
+    \item \textbf{Main Question}: Can extra crowd responses expose hidden details in the two candidate responses?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Core Idea: Crowd-Based Comparative Evaluation}
+  \begin{itemize}
+    \item Generate several \textbf{crowd responses} for the same instruction.
+    \item Compare each candidate response against these crowd responses.
+    \item Use the resulting \textbf{crowd judgments} as context for the final A/B judgment.
+    \item The crowd acts as evaluation anchors: different responses reveal different strengths and weaknesses.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{CCE Framework}
+  \begin{center}
+    \includegraphics[width=0.96\textwidth]{images/2/framework.png}
+  \end{center}
+  \vspace{-0.15cm}
+  \begin{itemize}
+    \item Crowd judgments are selected, cleaned, and inserted into the final judge prompt.
+    \item The final judge produces a richer CoT and a more reliable preference label.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Results Across Judge Benchmarks}
+  \begin{center}
+    \includegraphics[width=0.86\textwidth]{images/2/results.png}
+  \end{center}
+  \vspace{-0.1cm}
+  \begin{itemize}
+    \item CCE improves average accuracy across five benchmarks.
+    \item The paper reports an average \textbf{6.7\%} gain over strong judging baselines.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Beyond Evaluation: Distillation and SFT}
+  \begin{itemize}
+    \item \textbf{Judge distillation}: longer, higher-quality CCE rationales train smaller judge models more effectively.
+    \item \textbf{Crowd rejection sampling}: CCE helps select better training samples from candidate response pools.
+    \item \textbf{Scaling behavior}: accuracy improves as more crowd comparisons are used at inference time.
+    \item \textbf{Practical value}: CCE is not only an evaluator; it also improves training data selection.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Critical Review \& Relation to Paper 1}
+  \begin{itemize}
+    \item \textbf{Strength}: directly targets incomplete CoT reasoning by forcing comparison against diverse anchors.
+    \item \textbf{Strength}: useful for evaluation, judge distillation, and rejection sampling.
+    \item \textbf{Limitation}: extra crowd responses increase inference cost and prompt length.
+    \item \textbf{Limitation}: if crowd responses are low-quality or homogeneous, they may add noise instead of insight.
+    \item \textbf{Takeaway}: RocketEval decomposes criteria; CCE expands comparison context. Together, they make LLM judges more structured and more informative.
+  \end{itemize}
+\end{frame}
+
 \end{document}
