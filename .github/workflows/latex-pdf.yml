@@ -26,6 +26,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Build all PDFs first
           for dir in Phase_*/presentation; do
             echo "Building $dir"
 
@@ -35,12 +36,14 @@ jobs:
                 -w "/workdir/$dir" \
                 texlive/texlive \
                 latexmk -pdf main.tex
-
-              if git status --porcelain | grep -q "$dir/.*\.pdf"; then
-                git add "$dir"/*.pdf
-                git commit -m "Update PDF for $dir [skip ci]" || true
-              fi
             fi
           done
 
-          git push
+          # Check for any PDF changes and commit them all at once
+          if git status --porcelain | grep -q "Phase_.*/presentation/.*\.pdf"; then
+            git add Phase_*/presentation/*.pdf
+            git commit -m "Update PDFs for all phases [skip ci]" || true
+            git push
+          else
+            echo "No PDF changes detected"
+          fi

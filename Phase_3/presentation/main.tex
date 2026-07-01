@@ -201,4 +201,162 @@
   \end{itemize}
 \end{frame}
 
+\section{Category 3: Scalability Limits \& Benchmark Robustness}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PAPER 4: Tuning LLM Judge Design Decisions for 1/1000 of the Cost
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper4}{}
+  \Large Paper 4:\\Tuning LLM Judge Design Decisions for 1/1000 of the Cost
+\end{frame}
+
+\begin{frame}{Title \& Overview}
+  \begin{itemize}
+    \item \textbf{Paper}: \emph{Tuning LLM Judge Design Decisions for 1/1000 of the Cost}
+    \item \textbf{Goal}: Replace expensive human evaluation with open-weight LLM judges --- no quality loss, $1/1000$ cost.
+    \item \textbf{Category}: Scalability Limits \& Benchmark Robustness.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Problem Statement \& Current Challenges}
+  \begin{itemize}
+    \item \textbf{GPT-4 dependency}: sanctions risk, sudden behavior shifts, high cost.
+    \item \textbf{Confounding factors}: model, prompt, hyperparameters change together (Alpaca-Eval, Arena-Hard).
+    \item \textbf{Cognitive biases}: \emph{length}, \emph{position}, \emph{self-enhancement}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Scaling Laws \& Optimal Metric}
+  \begin{itemize}
+    \item \textbf{Scaling up alone is not enough}: sub-7B judges act blindly, performing \emph{worse} than the length baseline.
+    \item \textbf{Spearman Correlation} (whole-leaderboard vs.\ human):
+      \begin{itemize}
+        \item Noisy and costly; high coefficient of variation (CV) for small models.
+        \item Grows only with many more instructions --- expensive to measure.
+      \end{itemize}
+    \item \textbf{Human Agreement} (chosen metric):
+      \begin{itemize}
+        \item High statistical stability, low noise ($CV \approx 1.3$).
+        \item Stays \emph{stationary} across instruction counts.
+        \item Distinguishes large models (32B, 72B) with far fewer, cheaper instructions.
+      \end{itemize}
+    \item \textbf{Takeaway}: Human Agreement exposes Alpaca-Eval's simplicity vs.\ Arena-Hard's robustness, at a fraction of the cost.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Scaling Laws --- Figure 1 \& Figure 2}
+  % TODO SCREENSHOT: [Extract Figure 1 and Figure 2 separately and save as images/4/scaling_laws.png and images/4/scaling_laws2.png]
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/4/Figure_1.png}
+    
+    \vspace{0.1cm} % فاصله عمودی بین دو عکس
+    
+    \includegraphics[width=0.95\textwidth]{images/4/Figure_2.png}
+    
+    \caption{Performance scales dynamically with both model size and instruction count,}
+    \label{fig:scaling_laws} % برای ارجاع دادن در متن (اختیاری)
+\end{figure}
+\end{frame}
+
+\begin{frame}{Hyperparameter Search Space}
+  \begin{itemize}
+    \item \textbf{4{,}480 configurations}.
+    \item \textbf{Models (7 open-weight)}: Llama 3.1 (8B, 70B), Qwen 2.5 (7B, 27B, 70B), Gemma 2 (9B, 27B).
+    \item \textbf{Temperature}: $[0.0,\;0.01,\;0.1,\;1.0]$ + order-swap averaging.
+    \item \textbf{Prompt formats (80)}: single score, Likert, \texttt{pair}, multi-criteria; JSON vs.\ raw text.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Smart Search Methodology}
+  \begin{itemize}
+    \item \textbf{Multi-Fidelity (Successive Halving)}:
+      \begin{itemize}
+        \item 4{,}480 $\rightarrow$ 400 instructions.
+        \item 1{,}200 $\rightarrow$ 1{,}200 instructions.
+        \item 400 $\rightarrow$ 3{,}548 LMSys instructions.
+      \end{itemize}
+    \item \textbf{Cost cut to $\tfrac{1}{3}$} of the traditional approach.
+    \item \textbf{Multi-Objective}: non-dominated sort $\rightarrow$ Pareto front (accuracy vs.\ token cost).
+  \end{itemize}
+  % TODO SCREENSHOT: [Extract Figure 4 and save as images/4/search_methodology.png]
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/4/Figure_4.png}
+    \caption{Multi-Fidelity Pareto Optimization (Successive Halving).} % برای ارجاع دادن در متن (اختیاری)
+\end{figure}
+\end{frame}
+
+\begin{frame}{Survival Analysis: Winning Configs}
+  \begin{itemize}
+    \item \textbf{\texttt{pair} format dominates}: 0--10 score per model.
+    \item \textbf{CoT hurts}: \texttt{explanation}/\texttt{answer} lowers accuracy, raises cost.
+    \item \textbf{Temperature $\approx 0$} ($0.0$, $0.01$) wins.
+    \item \textbf{Order-swap averaging} boosts stability.
+  \end{itemize}
+  % TODO SCREENSHOT: [Extract Figure 6 and save as images/4/survival_analysis.png]
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/4/Figure_6.png}
+    \caption{Hyperparameter Survival Analysis (Top 100 Configurations).} % برای ارجاع دادن در متن (اختیاری)
+\end{figure}
+\end{frame}
+
+\begin{frame}{Results: LMSys Data}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.45\textwidth}
+      \begin{itemize}
+        \item 3 judges (Small $<$10B, Medium $<$32B, Large $<$72B) on 3{,}000 test instructions.
+        \item Fine-tuned PandaLM-7B, JudgeLM-7B fail (distribution shift).
+        \item \textbf{Ours-large}: Human Agreement $0.49$ $\approx$ GPT-4o-mini ($0.50$).
+        \item \textbf{Cost}: \alert{\$0.48} vs.\ \$1.2 per 1k.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.52\textwidth}
+      % TODO SCREENSHOT: [Extract Table 2 and save as images/4/table2_lmsys.png. Red-box cost figures.]
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/4/Table_2.png}
+    \caption{Comparison of judges on LMSys test instructions} % برای ارجاع دادن در متن (اختیاری)
+\end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Results: PandaLM \& Arena-Hard}
+  \begin{itemize}
+    \item \textbf{PandaLM}: \textbf{Ours-small} ($<$10B) $0.67$ $>$ dedicated 70B PandaLM.
+    \item \textbf{Arena-Hard}: \textbf{Ours-medium} Spearman \alert{$0.93$} @ \alert{\$0.48}/1k vs.\ GPT-4 $0.90$ @ \alert{\$50}/1k.
+  \end{itemize}
+  
+  % TODO SCREENSHOT: [Extract Table 3 and Table 4. Save as images/4/table3_pandalm.png and images/4/table4_arenahard.png. Red-box $0.48 vs. $50 in Table 4.]
+  
+  \begin{center}
+    \begin{minipage}{0.48\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/4/Table_3.png}
+      \captionof{}{Comparison with PandaLM on PandaLM test set}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{images/4/Table_4.png}
+      \captionof{}{Spearman correlation
+between win-rates}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Critical Review}
+  \begin{itemize}
+    \item \textbf{Limited generalizability}: only 3 Decoder-only families; MoE unproven.
+    \item \textbf{CoT rejection uncontrolled}: may be ``Lost in the Middle'' in sub-10B models, not judging per se.
+    \item \textbf{Early-filtering risk}: Successive Halving assumes question homogeneity --- hard-task specialists may be wrongly early-stopped.
+    \item \textbf{Goodhart's Law}: optimizing for human agreement amplifies hidden human biases.
+    \item \textbf{Cost oversimplified}: ignores hardware setup, VRAM, orchestration for 32B/72B.
+  \end{itemize}
+\end{frame}
+
 \end{document}
