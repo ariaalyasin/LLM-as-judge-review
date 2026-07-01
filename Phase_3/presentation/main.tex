@@ -360,4 +360,171 @@ between win-rates}
   \end{itemize}
 \end{frame}
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%////////////////%%%%%%%%%%%
+% PAPER 6: TRUST OR ESCALATE: LLM Judges with Provable Guarantees for Human Agreement
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%////////////////%%%%%%%%%%%
+
+\begin{frame}[standout]
+  \hypertarget{paper6}{}
+  \Large Paper 6:\\Trust or Escalate: LLM Judges with Provable Guarantees
+\end{frame}
+
+\begin{frame}{Title \& Overview}
+  \begin{itemize}
+    \item \textbf{Paper}: \emph{TRUST OR ESCALATE: LLM Judges with Provable Guarantees for Human Agreement}
+    \item \textbf{Goal}: Control LLM judging reliability with \emph{mathematically provable} guarantees --- not just heuristics.
+    \item \textbf{Category}: Scalability Limits \& Benchmark Robustness.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Motivation: Why Heuristics Fail}
+  \begin{itemize}
+    \item \textbf{Large-scale evaluation} (e.g., 1M samples): human labeling is infeasible.
+    \item \textbf{GPT-4 as judge}: expensive heuristic --- suffers from systematic bias (length, position) and over-confidence.
+    \item \textbf{Key question}: how to make LLM judging \emph{reliable} with a \emph{provable risk bound}?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Mathematical Framework: Trust or Escalate}
+  \begin{itemize}
+    \item \textbf{Core idea}: the model should \emph{not} always vote --- if uncertain, it should abstain ($ \rightarrow $ escalate).
+    \item \textbf{Conditional output}:
+    \[
+    (f_{LM}, c_{LM})(x) =
+    \begin{cases}
+      f_{LM}(x) & \text{if } c_{LM}(x) \ge \lambda \\
+      \emptyset & \text{otherwise}
+    \end{cases}
+    \]
+    \item $f_{LM}$: preference vote. \; $c_{LM}$: confidence (0--1). \; $\lambda$: threshold.
+    \item \textbf{Risk guarantee}:
+    \[
+    P(f_{LM}(x) = y_{human} \mid c_{LM}(x) \ge \lambda) \ge 1 - \alpha
+    \]
+    \item User sets error risk $\alpha$ and failure probability $\delta$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Calibration: Fixed-Sequence Testing}
+  \begin{itemize}
+    \item \textbf{Calibration set} $D_{cal}$: small human-labeled set (e.g., 500 samples) to find optimal $\hat{\lambda}$.
+    \item \textbf{Binomial upper bound}: model errors on $D_{cal}$ follow a binomial distribution --- compute strictest upper bound $\hat{R}^+(\lambda)$ at confidence $1-\delta$.
+    \item \textbf{Fixed-Sequence Testing}:
+      \begin{itemize}
+        \item Start from highest threshold ($\lambda = 0.999$) and move down.
+        \item Stop at last point where $\hat{R}^+(\lambda) \le \alpha$.
+      \end{itemize}
+    \item Much less conservative than Bonferroni correction; maintains higher coverage.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Innovation 1: Simulated Annotators}
+  \begin{itemize}
+    \item \textbf{Problem}: standard confidence metrics (predictive probability, verbalized confidence) are over-confident (high ECE).
+    \item \textbf{Solution}: simulate diverse human preferences via few-shot prompting.
+    \item \textbf{Mechanism}:
+      \begin{itemize}
+        \item Query model $N$ times with different in-context examples, each mimicking a specific human $j$.
+        \item Ensemble internal vote:
+        \[
+        c_{LM}(x) = \max_y \frac{1}{N} \sum_{j=1}^{N} p_{LM}(y \mid x; \text{examples}_j)
+        \]
+      \end{itemize}
+    \item Disagreement among simulators $\rightarrow$ low confidence $\rightarrow$ escalate. ECE reduced by $\sim$50\%.
+  \end{itemize}
+  % TODO SCREENSHOT: [Extract Figure 2 from the paper and save as images/6/fig2_simulated_annotators.png]
+  % \begin{center}
+  %   \includegraphics[width=0.6\textwidth]{images/6/fig2_simulated_annotators.png}
+  % \end{center}
+\end{frame}
+
+\begin{frame}{Innovation 1 : Illustration}
+    \begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/6/Figure_1.png}
+    \caption{Reliability plot for confidence estimation methods}
+\end{figure}
+
+\end{frame}
+
+\begin{frame}{Innovation 2: Cascaded Architecture}
+  \begin{itemize}
+    \item \textbf{Goal}: cut massive cost of multi-testing with large models (GPT-4).
+    \item \textbf{Cascade pipeline}:
+    \[
+    \text{Mistral-7B-it} \longrightarrow \text{GPT-3.5-turbo} \longrightarrow \text{GPT-4-turbo}
+    \]
+    \item Each layer: if $c(x) \ge \lambda_i$ $\rightarrow$ vote and stop; else $\rightarrow$ escalate.
+    \item Abstention policy at each layer auto-tuned based on global risk budget --- no manual chain tuning.
+  \end{itemize}
+  % TODO SCREENSHOT: [Extract Figure 1 (conceptual architecture diagram) and save as images/6/fig1_architecture.png]
+  % \begin{center}
+  %   \includegraphics[width=0.7\textwidth]{images/6/fig1_architecture.png}
+  % \end{center}
+\end{frame}
+
+\begin{frame}{Experimental Setup}
+  \begin{itemize}
+    \item \textbf{Models}: Mistral-7B-it $\rightarrow$ GPT-3.5-turbo $\rightarrow$ GPT-4-turbo.
+    \item \textbf{Stats}: $|D_{cal}| = 500$, \; $\delta = 0.1$ (90\% success guarantee), averaged over 1000 runs.
+    \item \textbf{Datasets}:
+      \begin{itemize}
+        \item \textbf{TL;DR}: summarization task (multiple human labels $\rightarrow$ use independent simulators).
+        \item \textbf{Chatbot Arena}: real-world chat comparisons (single human label $\rightarrow$ majority-based simulators).
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results: TL;DR }
+  \begin{itemize}
+    \item \textbf{Risk control}: GPT-4 alone achieves 0\% success at 90\% agreement target; proposed method passes \emph{all} risk levels.
+    \item \textbf{Coverage at 90\% agreement}: 55.7\% of data covered; half handled by Mistral + GPT-3.5.
+    \item \textbf{At 70\% agreement}: coverage reaches 96\%; Mistral alone handles 84\%.
+  \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Results: TL;DR}
+  % TODO SCREENSHOT: [Extract Figure 3 and save as images/6/fig3_risk_coverage.png]
+  % TODO SCREENSHOT: [Extract Table 2 and save as images/6/table2_tlddr.png]
+
+  \begin{figure}[htpb]
+      \centering
+    \includegraphics[width=0.95\textwidth]{images/6/Table3-figure2.png}
+    \caption{TL;DR results}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Results: Chatbot Arena}
+  \begin{itemize}
+    \item \textbf{Guaranteed 85\% agreement}: system success rate = \alert{91.0\%} (matches $\delta=0.1$ expectation); all baselines near 0\%.
+    \item \textbf{Total coverage}: 63.2\%.
+    \item \textbf{Load distribution}: Mistral-7B (23.7\%), GPT-3.5 (58.8\%), GPT-4 (only 17.5\%).
+    \item \textbf{Key}: $>$82\% of evaluations completed without GPT-4, yet outperform blind GPT-4.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results: Chatbot Arena}
+  % TODO SCREENSHOT: [Extract Figure 4 and save as images/6/fig4_load_dist.png]
+  % TODO SCREENSHOT: [Extract Table 3 and save as images/6/table3_arena.png]
+  \begin{figure}[htpb]
+    \includegraphics[width=0.95\textwidth]{images/6/Table4-figure3.png}
+    \caption{ChatArena results}
+  \end{figure}
+\end{frame}
+
+
+
+\begin{frame}{Critical Review}
+  \begin{itemize}
+    \item \textbf{$D_{cal}$ sensitivity}: 500 samples $\rightarrow$ conservative upper bound $\rightarrow$ reduced real coverage; hidden human-labeling cost.
+    \item \textbf{Token overhead}: Simulated Annotators with $N$ judges $\times$ $K$ few-shot examples $\rightarrow$ huge context load even for cheap models.
+    \item \textbf{Binary pairwise only}: the binomial bound does not extend to scalar scoring (e.g., 1--10 ratings).
+    \item \textbf{Mild distribution-shift assumption}: stability under extreme shift (summarization $\rightarrow$ coding/math) unproven; i.i.d. violation collapses the guarantee.
+    \item \textbf{Escalation cost ambiguity}: unclear how $\emptyset$ samples are handled; human re-labeling cost can erode financial gains.
+  \end{itemize}
+\end{frame}
+
+
 \end{document}
