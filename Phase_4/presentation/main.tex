@@ -1,3 +1,4 @@
+
 \documentclass[10pt]{beamer}
 \usetheme[progressbar=frametitle]{metropolis}
 \usepackage{appendixnumberbeamer}
@@ -9,796 +10,1146 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{graphicx}
-\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 \usepackage{hyperref}
+\usepackage{caption}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+\newcommand{\safeimage}[2][]{%
+	\IfFileExists{#2}{\includegraphics[#1]{#2}}{%
+		\fbox{\parbox[c][0.28\textheight][c]{0.78\textwidth}{\centering Missing figure:\\ \texttt{\detokenize{#2}}}}%
+	}%
+}
 
 \title{LLM-as-a-Judge Reliability}
-\subtitle{Phase 4 Combined Presentation}
+\subtitle{Combined Presentation: Benchmarks, Biases, and Robustness}
 \date{}
 \author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
 \institute{Sharif University of Technology}
 
 \begin{document}
-
-\maketitle
-
-\section{Category 2: Bias Quantification \& Fairness Analysis}
-
-\begin{frame}[standout]
-  \hypertarget{paper3}{}
-  \Large Paper 3:\\AN EMPIRICAL ANALYSIS OF UNCERTAINTY IN LARGE LANGUAGE MODEL EVALUATIONS
-\end{frame}
-
-\begin{frame}{Category Alignment \& Positioning}
-  \framesubtitle{Positioning in the Four-Pillar Taxonomy}
-  \begin{itemize}
-    \item \textbf{Taxonomy Alignment:} Category 2 (Bias Quantification \& Fairness Analysis)
-    \item \textbf{Beyond Static Prejudices:} While prior literature focuses heavily on static evaluator biases (e.g., length, position, and brand preference), this work explores \textbf{dynamic stability}.
-    \item \textbf{Internal States:} Shifting focus from verbalized outputs to internal logit probability distributions of the evaluator.
-    \item \textbf{Systemic Failure:} Demonstrating how hidden evaluator uncertainty leads to fragile, non-reproducible model rankings.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Paper Overview \& Core Goals}
-  \framesubtitle{An Empirical Analysis of Uncertainty in LLM-as-a-Judge}
-  \begin{itemize}
-    \item \textbf{The Core Problem:} Automated LLM judges are widely used to replace human raters, yet their internal evaluation confidence remains unquantified and volatile.
-    \item \textbf{The Dual-Uncertainty Paradigm:} Real-world evaluations depend on a complex interaction between the judge's certainty and the candidate's generation certainty.
-    \item \textbf{Three-Step Research Agenda:}
-      \begin{enumerate}
-        \item \textbf{Existence:} Measuring raw logit probabilities to prove uncertainty exists across major model families.
-        \item \textbf{Mitigation:} Testing prompt formatting styles to stabilize decision boundaries.
-        \item \textbf{Utilization:} Training an uncertainty-aware judge to spot hallucinations in out-of-distribution (OOD) scenarios.
-      \end{enumerate}
-  \end{itemize}
-\end{frame}
-
-% TODO SCREENSHOT: [Extract Figure 1 from the paper emperical_2.pdf showing the Raccoon trait example and save it as images/1/raccoon_concept.png]
-\begin{frame}{The Dual-Uncertainty Interaction}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{images/3/raccoon_concept.png}
-    \caption{Visualizing the interplay of Candidate Response Confidence and Evaluator Judge Confidence.}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Part 1: Quantifying Uncertainty (Existence)}
-  \framesubtitle{Deep Technical Mechanics of Logit-Based Extraction}
-  \begin{itemize}
-    \item \textbf{Logit-Based Probabilities:} Instead of prompting judges to verbalize confidence (which suffers from poor numeric calibration), this work extracts the raw logits directly at the last layer of generation.
-    \item \textbf{Evaluation Confidence:} The precise probability of the specific token representing the final decision (e.g., the score "7" in absolute grading, or "1", "2", "Tie" in pairwise comparison).
-    \item \textbf{Response Confidence:} Calculated as the mathematical average of the generation probabilities of all tokens in the candidate's output.
-    \item \textbf{Zero-Cost Metadata:} Extracted directly during inference, bypassing the need for computationally expensive multi-sample consistency checks.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Part 2: Mitigating Uncertainty (Mitigation)}
-  \framesubtitle{Prompt Restructuring and Structural Calibration}
-  \begin{itemize}
-    \item \textbf{Format-Induced Doubt:} Default templates prompt judges to output the score first. This forces an immediate decision under high attention entropy, dispersing the probability mass.
-    \item \textbf{Chain-of-Thought (CoT) Calibration:} Forcing the judge to generate reasoning before the verdict token acts as a natural logit stabilizer, concentrating probability mass on the final score token.
-    \item \textbf{Self-Generated References:} Instructing the judge to write its own reference answer first provides a solid comparative anchor, reducing rating volatility.
-    \item \textbf{Post-Training Stabilization:} Specialized evaluator models (e.g., Prometheus2) trained in CoT formats display remarkably high confidence, but suffer from sensitivity to distribution shifts.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Part 3: Utilizing Uncertainty (ConfiLM)}
-  \framesubtitle{Inherent Doubt as a Hallucination Detector}
-  \begin{itemize}
-    \item \textbf{The Ingestion Concept:} Candidate models express lower token probabilities when attempting to hallucinate facts. By feeding this uncertainty into the judge, the judge can detect errors.
-    \item \textbf{The Verbalization Bridge:} LLMs struggle with continuous numerical float values in prompts. The authors map candidate logits into discrete natural language statements (e.g., "Highly confident", "Neutral", "Clearly doubtful").
-    \item \textbf{ConfiLM Fine-Tuning:} Fine-tuning Llama-3-8B-Instruct on Alpaca data augmented with these verbalized confidence statements.
-    \item \textbf{The Olympic 2024 Dataset:} A manually curated, 220-instance out-of-distribution (OOD) testing suite annotated by PhD-level experts (97.27\% agreement) to evaluate real-time factual robustness.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Part 3: Utilizing Uncertainty (ConfiLM)}
-  \framesubtitle{Inherent Doubt as a Hallucination Detector}
-  \begin{itemize}
-    \item \textbf{The Ingestion Concept:} Candidate models express lower token probabilities when attempting to hallucinate facts. By feeding this uncertainty into the judge, the judge can detect errors.
-    \item \textbf{The Verbalization Bridge:} LLMs struggle with continuous numerical float values in prompts. The authors map candidate logits into discrete natural language statements (e.g., "Highly confident", "Neutral", "Clearly doubtful").
-    \item \textbf{Confidence Buckets:} Ten evenly-spaced ranges from [0.0, 0.1) $\rightarrow$ \textit{"Complete doubt"} up to [0.9, 1.0] $\rightarrow$ \textit{"Absolute confidence"}, with \textit{"Neutral"} at the midpoint [0.5, 0.6).
-    \item \textbf{ConfiLM Fine-Tuning:} Fine-tuning Llama-3-8B-Instruct on Alpaca data augmented with these verbalized confidence statements.
-    \item \textbf{The Olympic 2024 Dataset:} A manually curated, 220-instance out-of-distribution (OOD) testing suite annotated by PhD-level experts (97.27\% agreement) to evaluate real-time factual robustness.
-  \end{itemize}
-\end{frame}
-
-% TODO SCREENSHOT: [Extract Figure 2 from the paper emperical_2.pdf showing the research pipeline diagram and save it as images/1/pipeline.png]
-\begin{frame}{Multi-Phase Experimental Pipeline}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.9\textwidth]{images/3/pipeline.png}
-    \caption{The three sequential experimental phases: Existence, Mitigation, and Utilization.}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Key Empirical Findings}
-  \framesubtitle{Consolidated Behavioral Observations}
-  \begin{itemize}
-    \item \textbf{Single-Answer vs. Pairwise Gap:} Absolute grading forces judges to evaluate in isolation, leading to high internal doubt. Pairwise comparisons provide relative anchors, resulting in highly decisive and confident assessments.
-    \item \textbf{Self-Preference Bias:} Evaluations within the same model family (e.g., Llama assessing Llama) result in artificially inflated ratings paired with unwarranted confidence spikes due to shared pre-training and stylistic overlap.
-    \item \textbf{The Capability Paradox:} General capability on reasoning benchmarks does not prevent evaluation doubt. Highly capable models like GPT-4o exhibit high uncertainty in default grading formats compared to less advanced models.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{ConfiLM OOD Performance}
-  \framesubtitle{Spotting Subtle Hallucinations in Writing Tasks}
-  \begin{itemize}
-    \item \textbf{OOD Challenges:} Standard judges fail in highly specific OOD domains (like real-time sports results) because they rely on in-distribution training data and overlook factual inaccuracies.
-    \item \textbf{The "Rugby Sevens" Case Study:} When a candidate model generated a news report with a fabricated date, GPT-4o and standard fine-tuned models chose the hallucinated, verbose response.
-    \item \textbf{The ConfiLM Victory:} By ingesting the verbalized low-confidence of the candidate, ConfiLM correctly flagged the response as inaccurate and penalized the hallucination.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Core Framework Strengths}
-  \begin{itemize}
-    \item \textbf{Dual-Uncertainty Interface:} Establishes the first unified framework integrating candidate generation doubt with judge decision confidence.
-    \item \textbf{Zero-Cost Calibration:} Demonstrates that Chain-of-Thought (CoT) acts as a computationally free, inference-time logit stabilizer.
-    \item \textbf{The Verbalization Bridge:} Successfully bypasses the numerical limits of language models by translating float values into natural adjectives.
-    \item \textbf{Expert-Curated Benchmark:} The Olympic 2024 dataset provides a rigorous, highly aligned OOD testbed for automated judges.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Operational Limitations}
-  \begin{itemize}
-    \item \textbf{Closed-Source API Barrier:} Logit extraction is impossible on proprietary commercial platforms (such as Claude and Gemini) that withhold token probabilities.
-    \item \textbf{Inference Latency Overhead:} Forcing a detailed explanation before outputting the score token elevates generation costs and runtime latency.
-    \item \textbf{Exposure Bias in SFT:} Specialized judges fine-tuned on rigid templates suffer from high scoring volatility when exposed to unfamiliar domains.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Critical Strategic Outlook}
-  \framesubtitle{Directions Proposed in the Paper's Discussion (\S6)}
-  \begin{itemize}
-    \item \textbf{Confidence-Triggered Escalation:} Future AI-evaluation platforms should establish automated confidence thresholds, triggering selective escalation to human raters for low-confidence judgments.
-    \item \textbf{Multimodal Uncertainty:} Extending the framework to measure uncertainty across image, audio, and video inputs in multi-modal judges.
-    \item \textbf{Multi-Turn Conversation Decay:} Investigating how evaluation uncertainty propagates or decays across complex, multi-turn dialogues.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[standout]
-  \hypertarget{paper4}{}
-  \Large Paper 4:\\Preference Leakage: A CONTAMINATION PROBLEM IN LLM-AS-A-JUDGE
-\end{frame}
-
-\section{Introduction \& Category Alignment}
-
-\begin{frame}{Context: The Evolution of Model Evaluation}
-  \begin{itemize}
-    \item \textbf{Shift in Evaluation Paradigms}:
-      \begin{itemize}
-        \item Traditional lexical n-gram metrics (BLEU, ROUGE) fail to capture semantic nuances in open-ended LLM outputs.
-        \item \textbf{LLM-as-a-Judge} has emerged as the industry standard for scalable, fast, and human-aligned model benchmarking.
-      \end{itemize}
-    \vspace{0.25cm}
-    \item \textbf{The Synthetic Data Engine}:
-      \begin{itemize}
-        \item Modern LLM alignment relies heavily on synthetic datasets generated by state-of-the-art teacher models (e.g., GPT-4o).
-      \end{itemize}
-    \vspace{0.25cm}
-    \item \textbf{The Core Vulnerability}:
-      \begin{itemize}
-        \item When the model producing the training data and the model judging the student share architectural or family ties, systemic evaluation bias occurs.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Category Alignment: Data vs. Preference Leakage}
-  \begin{itemize}
-    \item \textbf{Data Leakage (Classical Contamination)}:
-      \begin{itemize}
-        \item Direct overlap between pre-training/fine-tuning datasets and evaluation benchmark test sets.
-        \item Model simply memorizes specific ground-truth questions and answers.
-      \end{itemize}
-    \vspace{0.35cm}
-    \item \textbf{Preference Leakage (Evaluator Contamination)}:
-      \begin{itemize}
-        \item Structural, familial, or distillation relatedness between Data Generator ($M_G$) and Judge ($M_J$).
-        \item Preferences are transferred to Student ($M_S$) via synthetic training data ($D_{syn}$).
-        \item Evaluator inflates scores based on inherited stylistic and structural priors rather than objective response correctness.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Overview Diagram: Preference vs. Data Leakage}
-  % TODO SCREENSHOT: [Extract Figure 1 from the paper showing comparison between data leakage and preference leakage and save it as images/1/figure1_overview.png]
-  \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/4/figure1_overview.png}
-    \caption{Conceptual Architecture of Preference Leakage and Model Lineage Relationships}
-  \end{figure}
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SECTION 2: Methodology & Detailed Pipeline
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Methodology \& Experimental Pipeline}
-
-\begin{frame}{End-to-End Experimental Pipeline}
-  \begin{itemize}
-    \item \textbf{Stage 1: Seed Sampling \& Prompt Extraction}:
-      \begin{itemize}
-        \item Sampled 30,000 diverse open-ended prompts across diverse domains from UltraFeedback.
-      \end{itemize}
-    \item \textbf{Stage 2: Synthetic Data Generation ($M_G \rightarrow D_{syn}$)}:
-      \begin{itemize}
-        \item Teacher models ($M_G$) generate high-quality candidate responses to form instruction-tuning datasets.
-      \end{itemize}
-    \item \textbf{Stage 3: Student Model Post-Training ($M_S$)}:
-      \begin{itemize}
-        \item Base models (Mistral-7B, Qwen-2.5-14B) are trained on $D_{syn}$ via SFT, DPO, or In-Context Learning (ICL).
-      \end{itemize}
-    \item \textbf{Stage 4: Pairwise Evaluation \& PLS Calculation}:
-      \begin{itemize}
-        \item Judge models ($M_J$) evaluate $M_S$ against baseline models on Arena-Hard and AlpacaEval 2.0 to quantify score inflation.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Part 1: Problem Definition \& Lineage Taxonomy}
-  \begin{itemize}
-    \item \textbf{Conceptual Formulation}:
-      \begin{itemize}
-        \item Evaluation score assigned by $M_J$ to $M_S$ is systematically inflated when $M_G$ is related to $M_J$.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Three Lineage Relatedness Categories}:
-      \begin{enumerate}
-        \item \textbf{Same Model}: $M_G \equiv M_J$ (e.g., GPT-4o generates synthetic training data and later evaluates the student model).
-        \item \textbf{Inheritance}: $M_J$ is fine-tuned directly on $M_G$'s outputs or shares an identical fine-tuning lineage.
-        \item \textbf{Same Model Family}: $M_G$ and $M_J$ share architectural design, tokenizers, and pre-training data corpora (e.g., GPT-4o and GPT-4-Turbo).
-      \end{enumerate}
-    \vspace{0.2cm}
-    \item \textbf{Key Novelty \#1}:
-      \begin{itemize}
-        \item First formal taxonomy defining evaluator-generator dependency as an implicit bias channel distinct from simple self-enhancement.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Part 2: Experimental Controls \& Metric Mechanics}
-  \begin{itemize}
-    \item \textbf{Controlled Experimental Setup}:
-      \begin{itemize}
-        \item \textbf{Data Generators / Judges}: GPT-4o, Gemini-1.5-Flash, LLaMA-3.3-70B.
-        \item \textbf{Base Students}: Unaligned base models to eliminate pre-existing instruction-tuning contamination.
-        \item \textbf{Benchmarks}: Arena-Hard (500 challenging prompts) and AlpacaEval 2.0 (805 prompts).
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Preference Leakage Score (PLS) Formulation}:
-      \begin{itemize}
-        \item $PLS = \text{WinRate}(M_S \text{ judged by Related } M_J) - \text{WinRate}(M_S \text{ judged by Control } M_{ctrl})$.
-        \item Controls for position bias (swapping model order) and length bias.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Key Novelty \#2}:
-      \begin{itemize}
-        \item A rigorous cross-evaluation benchmarking framework that isolates style inheritance from genuine reasoning quality.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Part 3: Mechanistic Probing \& Stealth Bias}
-  \begin{itemize}
-    \item \textbf{The Recognition Paradox}:
-      \begin{itemize}
-        \item Can judges consciously detect outputs from their related student models?
-        \item Direct probing reveals LLM judges perform near random chance ($30\% - 53\%$ accuracy) at identification.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Classifier Detectability}:
-      \begin{itemize}
-        \item A simple linear classifier or lightweight BERT model achieves over $82.4\%$ accuracy in identifying student generations.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Spurious Features as Conduits}:
-      \begin{itemize}
-        \item Bias is driven by surface-level artifacts: formatting templates, markdown headers, bullet-point frequency, and tone.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Key Novelty \#3}:
-      \begin{itemize}
-        \item Proving preference leakage is a subconscious phenomenon where LLM judges reward stylistic alignment without explicit awareness.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SECTION 3: Empirical Findings
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}{Key Empirical Results (Verbal Summary)}
-  \begin{itemize}
-    \item \textbf{Widespread Score Inflation}:
-      \begin{itemize}
-        \item Significant positive PLS across all major model families (reaching up to $37.1\%$ win-rate inflation on Arena-Hard).
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Model Scale Impact}:
-      \begin{itemize}
-        \item Smaller student models (1B--3B parameters) show \textbf{higher} leakage scores because they memorize surface-level response templates more aggressively.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Post-Training Method Dynamics}:
-      \begin{itemize}
-        \item \textbf{SFT}: Maximum leakage ($23.6\%$ average) due to heavy stylistic imitation.
-        \item \textbf{DPO}: Significantly reduced leakage ($5.2\%$) by penalizing stylistic repetition.
-        \item \textbf{ICL}: Minimal to zero leakage ($-2.7\%$) as core weights remain untouched.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Domain \& Task Sensitivity}:
-      \begin{itemize}
-        \item Highest bias in open-ended creative writing and coding; lowest in deterministic math and logic problems.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SECTION 4: Core Framework Strengths
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}{Strengths \& Methodological Rigor}
-  \begin{itemize}
-    \item \textbf{Pioneering Problem Formulation}:
-      \begin{itemize}
-        \item Uncovers a systemic vulnerability in the synthetic data lifecycle that undermines community leaderboard integrity.
-      \end{itemize}
-    \vspace{0.3cm}
-    \item \textbf{Methodological Isolation}:
-      \begin{itemize}
-        \item Isolates confounding variables by starting exclusively with raw base models, avoiding instruction-tuning artifacts.
-      \end{itemize}
-    \vspace{0.3cm}
-    \item \textbf{Broad Practical Impact}:
-      \begin{itemize}
-        \item Demonstrates real-world implications for major public evaluations such as LMArena, AlpacaEval, and Open LLM Leaderboard.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SECTION 5: Operational Limitations
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}{Limitations \& Experimental Constraints}
-  \begin{itemize}
-    \item \textbf{High Computational \& API Costs}:
-      \begin{itemize}
-        \item Full pairwise evaluation matrices across frontier models demand massive API query volume and compute overhead.
-      \end{itemize}
-    \vspace{0.3cm}
-    \item \textbf{Proprietary Black-Box Constraints}:
-      \begin{itemize}
-        \item Closed-source model providers do not disclose full pre-training data or exact model lineages, limiting complete tracking.
-      \end{itemize}
-    \vspace{0.3cm}
-    \item \textbf{Inefficacy of Simple Prompting Mitigation}:
-      \begin{itemize}
-        \item Standard system prompts or Chain-of-Thought (CoT) instructions fail to remove preference leakage without structural adjustments.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SECTION 6: Strategic Outlook
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}{Future Directions \& Mitigation Strategies}
-  \begin{itemize}
-    \item \textbf{Strict Lineage Isolation}:
-      \begin{itemize}
-        \item Public leaderboards must enforce strict separation between data generation teacher models and benchmark judge models.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Post-Hoc Statistical Calibration}:
-      \begin{itemize}
-        \item Use held-out human judgment samples to dynamically adjust and normalize judge scoring distributions.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Multi-Judge Ensembling}:
-      \begin{itemize}
-        \item Combine evaluations from multiple non-related model families to cancel out model-family bias.
-      \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Stylistic Normalization Pipelines}:
-      \begin{itemize}
-        \item Pre-process responses through neutralizing paraphrasers to strip surface-level formatting artifacts before judging.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Summary \& Key Takeaways}
-  \begin{itemize}
-    \item \textbf{Takeaway 1}: Preference leakage is an insidious, subconscious contamination mechanism in modern LLM evaluation.
-    \vspace{0.25cm}
-    \item \textbf{Takeaway 2}: Judges favor student models that mirror their surface-level style, formatting, and structural cadence.
-    \vspace{0.25cm}
-    \item \textbf{Takeaway 3}: SFT intensifies leakage, whereas DPO, ICL, and post-hoc calibration offer effective defense pathways.
-    \vspace{0.25cm}
-    \item \textbf{Core Recommendation}: Decouple evaluation judges completely from synthetic training data pipelines for trustworthy benchmarks.
-  \end{itemize}
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%% Paper 6
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Category 3: Scalability Limits \& Benchmark Robustness.}
-\begin{frame}[standout]
-  \hypertarget{paper6}{}
-  \Large Paper 6:\\TRACT: Regression-Aware Fine-tuning Meets Chain-of-Thought Reasoning
-\end{frame}
-
-
-
-\begin{frame}{Category Alignment \& Positioning}
-  \framesubtitle{Positioning in the Four-Pillar Taxonomy}
-  \begin{itemize}
-    \item \textbf{Beyond Classification Loss:} While prior literature uses cross-entropy (CE) loss for score prediction, this work addresses the fundamental mismatch between classification-based training and numerical regression evaluation.
-    \item \textbf{Combining Best of Both Worlds:} TRACT integrates Chain-of-Thought (CoT) reasoning with regression-aware training to harness step-by-step reasoning while learning the numerical structure of scoring.
-    \item \textbf{Self-Generated CoTs:} A two-stage training pipeline that bridges the distribution gap between annotation CoTs and model-generated CoTs.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{The LLM-as-a-Judge Dilemma: Classification vs. Regression}
-  \framesubtitle{From Cross-Entropy to Regression-Aware Training}
-  \begin{itemize}
-    \item \textbf{Evaluation with LLMs:} LLM-as-a-judge has become the standard for scalable, human-aligned model benchmarking.
-    \item \textbf{Traditional Approach:} Standard methods use cross-entropy (CE) loss for fine-tuning, treating score prediction as a classification problem.
-    \item \textbf{Fundamental Problem:} CE loss ignores the numerical nature of scores; predicting score 5 when the true score is 1 is penalized the same as predicting score 2.
-    \item \textbf{RAFT Solution:} Regression-Aware Fine-Tuning (RAFT) addresses this using squared error loss, but sacrifices Chain-of-Thought (CoT) reasoning, leading to degraded performance.
-  \end{itemize}
-  \vspace{0.3cm}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.6\textwidth]{images/6/1.png}
-    \caption{Comparison of different approaches (Standard, RAFT, TRACT).}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Introducing TRACT: Bridging Reasoning and Regression}
-  \framesubtitle{Two-stage Regression-Aware Fine-tuning with CoT}
-  \begin{itemize}
-    \item \textbf{TRACT Method:} Combines CoT reasoning with regression-aware training through a novel CoT-RAFT objective.
-    \item \textbf{Loss Function:} The training objective combines CE loss for learning CoT reasoning and RAFT loss for accurate score prediction.
-    \item \textbf{Predictor Formulation:}
-    $\hat{y}_{CR}(x) = \sum_{y \in Y} p(\text{str}(y) | [x, \hat{s}]) \cdot y; \hat{s} \sim p(\cdot | x)$
-  \end{itemize}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/6/1a.png}
-    \caption{CoT-RAFT fine-tuning objective showing CE Loss (for CoT) and RAFT Loss (for Score).}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{The Distribution Shift Problem in CoT Generation}
-  \framesubtitle{Why Self-Generated CoTs Matter}
-  \begin{itemize}
-    \item \textbf{Training Phase:} Model is fine-tuned on CoTs generated by a powerful annotator (e.g., GPT-4).
-    \item \textbf{Inference Phase:} Model must predict scores based on its own self-generated CoTs.
-    \item \textbf{The Gap:} This creates a severe distribution shift between training and inference CoTs, significantly degrading performance.
-    \item \textbf{Empirical Evidence:} Table 3 shows RMSE gap of 0.51 between using annotation CoTs vs. self-generated CoTs for the stage-1 model.
-  \end{itemize}
-  \vspace{0.3cm}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.65\textwidth]{images/6/3.png}
-    \caption{RMSE analysis showing distribution shift between annotation and self-generated CoTs.}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{TRACT Two-Stage Architecture: Self-Generated CoTs}
-  \framesubtitle{Algorithm Overview}
-  \begin{itemize}
-    \item \textbf{Stage 1:} Fine-tune seed LLM ($p_0$) on ground truth scores and annotation CoTs from $p_a$ (GPT-4) using CoT-RAFT objective to obtain $p_s$.
-    \item \textbf{Data Generation:} Use $p_s$ to generate self-generated CoTs for all training data, pairing them with original ground truth scores to create $D_{self}$.
-    \item \textbf{Stage 2:} Fine-tune the original seed LLM ($p_0$) on $D_{self}$ using the same CoT-RAFT objective to obtain $p_{TRACT}$.
-  \end{itemize}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.75\textwidth]{images/6/1b.png}
-    \caption{Two-stage training pipeline (Stage 1 $\rightarrow$ Generate $\rightarrow$ Stage 2).}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Rigorous Experimental Setup}
-  \framesubtitle{Datasets, Models, and Implementation Details}
-  \begin{itemize}
-    \item \textbf{Base Models:} Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.2.
-    \item \textbf{Training Data:} Feedback Collection with approximately 100K samples generated by GPT-4.
-    \item \textbf{Test Datasets:} Four established benchmarks: Feedback Bench, FLASK, Vicuna Bench, and MT Bench.
-    \item \textbf{Evaluation Metrics:} Pearson's $r$, Spearman's $\rho$, and Kendall's $\tau$ correlation coefficients.
-    \item \textbf{Implementation:} LoRA (rank 8) via Llama-Factory library; vLLM for inference. Training takes $\sim$100 hours on a single NVIDIA RTX A6000.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Main Results: Redefining State-of-the-Art}
-  \framesubtitle{TRACT Consistently Outperforms All Baselines}
-  \begin{itemize}
-    \item \textbf{Outperforms Traditional CoT:} TRACT achieves Pearson's $r$ of 0.650 on Mistral vs. 0.557 for standard CE+CoT (row B.2).
-    \item \textbf{Beats Prior SOTA:} TRACT surpasses Prometheus-2-7B (best same-size model) by 0.059 average Pearson's $r$ without using additional data.
-    \item \textbf{Strong on Llama:} On Llama-3.1-8B, TRACT improves average Pearson's $r$ by 0.100 over the baseline.
-    \item \textbf{Robust Improvement:} Achieves best and second-best results across all four evaluation datasets.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Ablation Studies: What Makes TRACT Work?}
-  \framesubtitle{Component-wise Analysis}
-  \begin{itemize}
-    \item \textbf{Self-Generated CoTs are Critical:} Removing stage 2 (using GPT-4 CoTs at inference) causes 0.094 drop in Pearson's $r$.
-    \item \textbf{CoT-RAFT Loss is Essential:} Using CE loss with self-generated CoTs (row A.2) still underperforms by 0.033; using CE with self-generated CoTs (row A.3) degrades to 0.512.
-    \item \textbf{Stage 2 Must Start from Seed LLM:} Initializing stage 2 from $p_s$ (instead of $p_0$) severely degrades performance to 0.515 Pearson's $r$.
-    \item \textbf{Key Insight:} Self-generated CoTs are harmful with CE loss but beneficial with CoT-RAFT objective.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Inference Efficiency: Scaling Sampled CoTs}
-  \framesubtitle{TRACT with One CoT Outperforms Others with Five}
-  \begin{itemize}
-    \item \textbf{Stable Performance}
-    \item \textbf{Compute Efficiency}
-    \item \textbf{Low Variance}
-    \item \textbf{Practical Impact:} Enables high-accuracy evaluation with minimal computational cost in production environments.
-  \end{itemize}
-  \vspace{0.2cm}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.6\textwidth]{images/6/figuree3.png}
-    \caption{Average Pearson's $r$ vs. number of sampled CoTs. TRACT (red) remains stable while baselines improve with more samples.}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Point-wise LLM-as-Judge vs. Reward Models}
-  \framesubtitle{Cross-Domain Generalization}
-  \begin{itemize}
-    \item \textbf{RewardBench Evaluation:} TRACT trained only on point-wise data achieves 0.736 accuracy on RewardBench (pairwise ranking), slightly below CLoud (0.759) but outperforming Prometheus-2-7B.
-    \item \textbf{CLoud Comparison:} CLoud (reward model) performs poorly on point-wise LLM-as-a-judge benchmarks, highlighting that RMs cannot handle fine-grained evaluation rubrics.
-    \item \textbf{Key Distinction:} Point-wise LLM-as-judge models can evaluate based on detailed rubrics and produce meaningful standalone scores, unlike reward models.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Comparative Analysis: Pros \& Cons}
-  \framesubtitle{Balanced Assessment of TRACT}
-  \begin{columns}
-    \column{0.5\textwidth}
-    \textbf{Strengths}:
-    \begin{itemize}
-      \item First method to successfully combine regression-aware loss with CoT reasoning.
-      \item Self-generated CoTs minimize distribution shift between training and inference.
-      \item Works well on RewardBench despite being trained only on point-wise data.
-    \end{itemize}
-    \column{0.5\textwidth}
-    \textbf{Limitations}:
-    \begin{itemize}
-      \item Requires access to output probabilities (not applicable to black-box APIs).
-      \item Higher training cost due to two-stage pipeline and intermediate data generation phase.
-    \end{itemize}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Critical Review: Blind Spots and Hidden Flaws}
-  \framesubtitle{Self-Critique and Future Directions}
-  \begin{itemize}
-    \item \textbf{Linearity Assumption:} Using MSE assumes equal quality distance between scores 1-2 and 4-5, which is not psychologically valid for ordinal scales.
-    \item \textbf{Missing QWK Metric:} The gold standard for evaluating judges on 1-5 scales is Quadratic Weighted Kappa (QWK), which is notably absent.
-    \item \textbf{Hallucination Risk:} Stage 2 only optimizes for score prediction; no mechanism guarantees logical correctness of generated CoTs.
-    \item \textbf{Post-hoc Rationalization:} Heavy regression weighting may transform CoTs from analytical reasoning into justification artifacts for target numbers.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Summary: Key Takeaways}
-  \begin{itemize}
-    \item \textbf{Takeaway 1:} TRACT bridges the gap between regression-aware training (RAFT) and Chain-of-Thought reasoning (CoT).
-    \vspace{0.2cm}
-    \item \textbf{Takeaway 2:} Self-generated CoTs combined with CoT-RAFT loss are essential; CE loss with self-generated data actually harms performance.
-    \vspace{0.2cm}
-    \item \textbf{Takeaway 3:} TRACT achieves new SOTA with 0.650 Pearson's $r$ on Mistral, outperforming Prometheus-2-7B by 0.059 without additional training data.
-    \vspace{0.2cm}
-    \item \textbf{Takeaway 4:} The two-stage architecture (seed $\rightarrow$ $p_s$ $\rightarrow$ generate CoTs $\rightarrow$ retrain from seed) is crucial for success.
-    \vspace{0.2cm}
-    \item \textbf{Core Recommendation:} Use TRACT for high-accuracy, compute-efficient LLM-as-a-judge evaluation with CoT reasoning.
-  \end{itemize}
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%% Paper 5
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{frame}[standout]
-  \hypertarget{paper5}{}
-  \Large Paper 5:\\Is LLM-as-a-Judge Robust? Universal Adversarial Attacks on Zero-shot Assessment
-\end{frame}
-
-
-\begin{frame}{Category Alignment \& Positioning}
-  \framesubtitle{Positioning in the Four-Pillar Taxonomy}
-  \begin{itemize}
-    \item \textbf{Taxonomy Alignment:} Category 3 (Adversarial Robustness Analysis)
-    \item \textbf{Security Perspective:} While prior work focuses on improving judge accuracy, this work examines the vulnerability of LLM-as-a-judge to adversarial manipulation.
-    \item \textbf{Universal Adversarial Suffixes:} Short phrases appended to any text can manipulate judge LLMs into predicting maximum scores regardless of actual quality.
-    \item \textbf{Transferable Attacks:} Attacks learned on small open-source models (FlanT5-3B) successfully transfer to commercial giants (GPT-3.5).
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Problem Statement \& Key Finding}
-  \framesubtitle{Universal Adversarial Attacks on LLM Assessment}
-  \begin{itemize}
-    \item \textbf{Paradigm Shift}: LLMs are widely used as zero-shot assessors for evaluating exams and benchmarking NLP systems.
-    \vspace{0.2cm}
-    \item \textbf{Core Research Question}: Are these automated judges robust against adversarial manipulation?
-    \vspace{0.2cm}
-    \item \textbf{Key Finding}: Appending a short \textbf{universal adversarial suffix} to any text can trick judge LLMs into predicting maximum scores, regardless of actual quality.
-    \vspace{0.2cm}
-    \item \textbf{Attack Model}: adversaries may not know or have access to the judge-LLM --- a surrogate-based black-box attack is proposed.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{The Attack Mechanism}
-  \framesubtitle{How Universal Adversarial Phrases Deceive LLM Judges}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.85\textwidth]{images/5/figure1.png}
-    \caption{[PLACEHOLDER] Figure 1: Universal adversarial attack on absolute scoring (left) vs comparative assessment (right).}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Threat Model: Mathematical Formulation}
-  \framesubtitle{Concatenative Universal Adversarial Attack}
-  \begin{itemize}
-    \item \textbf{Adversarial Perturbation}: Original text $x$ is modified as $x + \delta$, where $\delta$ is a short phrase of length $L \ll |x|$.
-    \vspace{0.3cm}
-    \item \textbf{Universal Attack}: A single phrase $\delta^*$ learned to boost rank/score across all inputs:
-    \vspace{0.2cm}
-\begin{block}{Mathematical Formulation}
-\[
-\bar{r}(\delta) = \frac{1}{NM} \sum_{m} \sum_{n} \hat{r}'^{(m)}_n(\delta)
-\]
-
-\[
-\delta^* = \arg\min_{\delta} \bar{r}(\delta)
-\]
-\end{block}
-    \vspace{0.3cm}
-    \item \textbf{Surrogate Model Transfer}: Attack learned on open-source FlanT5-xl (3B) transfers to closed models (Llama2-7B, Mistral-7B, GPT-3.5).
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Attack Algorithm: Greedy Search}
-  \framesubtitle{Token-by-Token Universal Phrase Discovery}
-  \begin{itemize}
-    \item \textbf{Challenge}: Exhaustive search over vocabulary is computationally infeasible.
-    \vspace{0.2cm}
-    \item \textbf{Greedy Approximation}: Iteratively append the token that maximizes expected score:
-    \vspace{0.2cm}
-\begin{block}{Greedy Update}
-\[
-\delta^*_{l+1}
-=
-\arg\max_{\delta \in V}
-\mathbb{E}\!\left[
-s(x+\delta^*_{1:l}+\delta)
-\right]
-\]
-\end{block}
-    \vspace{0.2cm}
-    \item \textbf{Vocabulary Source}: English word corpus from NLTK package.
-    \vspace{0.2cm}
-    \item \textbf{Key Observation}: Gradient-based methods (GCG) perform worse than simple greedy search for this discrete prompt space.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Experimental Setup}
-  \framesubtitle{Datasets, Models, and Evaluation Protocol}
-  \begin{itemize}
-    \item \textbf{Datasets}:
-    \begin{itemize}
-      \item \textbf{SummEval}: 100 passages, 16 summaries each, evaluated on coherence, consistency, fluency, relevance.
-      \item \textbf{TopicalChat}: 60 dialogues, 6 responses each, evaluated on coherence, continuity, engagingness, naturalness.
-    \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Models}:
-    \begin{itemize}
-      \item \textbf{Surrogate}: FlanT5-xl (3B, encoder-decoder) for attack training.
-      \item \textbf{Targets}: Llama2-7B-chat, Mistral-7B-chat, GPT-3.5 (175B).
-    \end{itemize}
-    \vspace{0.2cm}
-    \item \textbf{Data Split}: 20\% development (attack learning on only 2 candidates), 80\% test.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Results: Surrogate Model Vulnerability}
-  \framesubtitle{Absolute Scoring vs. Comparative Assessment on FlanT5-xl}
-  
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.75\textwidth]{images/5/figure2.png}
-    \caption{Average rank vs. attack phrase length.}
-  \end{figure}
-  
-  \vspace{-0.2cm}
-  
-  \begin{center}
-    \small
-    \begin{tabular}{lcc}
-      \toprule
-      \textbf{Attack Type} & \textbf{No Attack (Score)} & \textbf{Attack (Score)} \\
-      \midrule
-      SUMM-ABS-OVE & 3.73 & 4.74 \\
-      SUMM-ABS-CON & 3.88 & 4.35 \\
-      TOPIC-ABS-OVE & 2.93 & 4.63 \\
-      TOPIC-ABS-CNT & 3.02 & 4.32 \\
-      \bottomrule
-    \end{tabular}
-    
-
-    \captionof{table}{Table 3: 4-word attack phrases yield near-maximum scores}
-  \end{center}
-\end{frame}
-
-\begin{frame}{Results: Transferability to Target Models}
-  \framesubtitle{Black-Box Attack Transfer from FlanT5-xl to Commercial LLMs}
-  \begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/5/figure3.png}
-    \caption{Attack transferability from surrogate to Llama2, Mistral, and GPT-3.5.}
-  \end{figure}
-  \vspace{-0.50cm}
-  \textbf{Key Observations}:
-  \begin{itemize}
-    \item High transferability for absolute scoring --- same 4-word phrases fool GPT-3.5.
-    \item GPT-3.5 is more vulnerable to shorter attack phrases (longer ones overfit surrogate).
-    \item Comparative assessment remains structurally robust even under transfer.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Defense: Perplexity-Based Detection}
-  \framesubtitle{A Simple Yet Effective Adversarial Sample Detector}
-  
-  \begin{itemize}
-    \item \textbf{Why Perplexity?}: Universal adversarial phrases disrupt natural language flow, yielding high perplexity.
-    \item \textbf{Detection Mechanism}: Use Mistral-7B base model to compute perplexity. Classify input as adversarial if $\mathrm{perp} > \beta$.
-    \item \textbf{Performance}: F1 scores ranging from 0.70 to 0.81 on detection tasks.
-    \item \textbf{Limitation}: Adaptive attacks can jointly optimize for score inflation and text fluency (low perplexity), bypassing this defense.
-  \end{itemize}
-
-  % Clean block with the formula
-  \begin{block}{Perplexity Calculation}
-    \[
-      \mathrm{perp} = -\frac{1}{|x|} \log(P_\theta(x))
-    \]
-  \end{block}
-\end{frame}
-
-\begin{frame}{Critical Review: Strengths \& Limitations}
-  \framesubtitle{Balanced Assessment of the Study}
-  \begin{columns}
-    \column{0.5\textwidth}
-    \textbf{Strengths}:
-    \begin{itemize}
-      \item First systematic study of adversarial attacks on LLM-as-judge.
-      \item Practical black-box threat model with real transferability.
-      \item Identifies structural superiority of comparative over absolute assessment.
-    \end{itemize}
-    \column{0.5\textwidth}
-    \textbf{Limitations}:
-    \begin{itemize}
-      \item Greedy search only over discrete NLTK vocabulary; continuous embedding attacks unexplored.
-      \item Defense (perplexity) is superficial --- adaptive attacks can preserve fluency.
-      \item Training on only 2 candidates may overfit to specific distributions.
-      \item Zero-shot only; few-shot settings unexplored.
-    \end{itemize}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Summary: Key Takeaways}
-  \begin{itemize}
-    \item \textbf{Vulnerability Confirmed}: LLM-as-a-Judge systems are highly susceptible to universal adversarial attacks on absolute scoring tasks.
-    \vspace{0.25cm}
-    \item \textbf{Transferability}: Attacks learned on small open-source models (FlanT5-3B) successfully transfer to commercial giants (GPT-3.5).
-    \vspace{0.25cm}
-    \item \textbf{Comparative > Absolute}: Pairwise comparison is structurally robust due to competing objectives across prompt orderings.
-    \vspace{0.25cm}
-    \item \textbf{Defense}: Perplexity detection offers initial protection but is insufficient against adaptive adversaries.
-    \vspace{0.25cm}
-    \item \textbf{Core Recommendation}: Use comparative assessment for high-stakes evaluation; absolute scoring should not be trusted without safeguards.
-  \end{itemize}
-\end{frame}
-
+	
+	\maketitle
+	
+	
+	\section{Category 1: Benchmarks \& Frameworks for Judges}
+	
+	\begin{frame}[standout]
+		\hypertarget{paper1}{}
+		\Large Paper 1:\\LLMs instead of Human Judges?\\
+		\normalsize A Large Scale Empirical Study across 20 NLP Evaluation Tasks
+	\end{frame}
+	%%%%%%%%%%% PAPER 1 %%%%%%%%%%%
+	% Slide 2 --- ~50 sec
+	\begin{frame}{The Problem: Can LLMs Replace Human Judges?}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.48\textwidth}
+			\begin{itemize}
+				\item Human evaluation is informative, but \textbf{slow, expensive, and difficult to scale}.
+				\item LLM-as-a-Judge is increasingly used as a cheaper automatic substitute.
+				\item Prior evidence is mixed and often based on \textbf{few datasets or proprietary models}.
+			\end{itemize}
+			
+			\vspace{0.15cm}
+			\textbf{Core research question:}
+			\[
+			\text{How reliably can current LLMs reproduce human judgments?}
+			\]
+			
+			\column{0.50\textwidth}
+			\centering
+			\safeimage[width=\textwidth]{images/1/fig1_evaluation_examples.png}
+		\end{columns}
+		
+		\vspace{0.05cm}
+		{\tiny Figure 1 from Bavaresco et al. (2025): examples of human and LLM evaluation on human- and machine-generated text.}
+	\end{frame}
+	
+	% Slide 3 --- ~60 sec
+	\begin{frame}{Main Contribution: JUDGE-BENCH}
+		\framesubtitle{A broad testbed for evaluating the evaluators}
+		\begin{itemize}
+			\item \textbf{20 NLP datasets} with existing human annotations and \textbf{70,000+ test instances}.
+			\item \textbf{11 LLM judges}: proprietary and open-weight models, from 7B-scale models to GPT-4o.
+			\item Deliberately varies four important axes:
+			\begin{enumerate}
+				\item \textbf{What is judged?} Grammar, toxicity, coherence, factual consistency, verbosity, translation quality, reasoning traces, etc.
+				\item \textbf{Annotation type:} categorical vs.\ graded scores.
+				\item \textbf{Who judged it?} experts vs.\ non-experts.
+				\item \textbf{Text source:} human-written vs.\ model-generated.
+			\end{enumerate}
+		\end{itemize}
+		
+		\vspace{0.1cm}
+		\begin{block}{Novelty}
+			Instead of asking whether one judge works on one benchmark, the paper asks whether
+			\textbf{LLM judging is reliable across tasks, properties, annotator expertise, and data sources}.
+		\end{block}
+	\end{frame}
+	
+	% Slide 4 --- ~55 sec
+	\begin{frame}{How Are the LLM Judges Evaluated?}
+		\framesubtitle{Experimental design and agreement metrics}
+		\begin{itemize}
+			\item The authors reuse the \textbf{original human annotation instructions} as prompts whenever available.
+			\item Model outputs are constrained to the expected label/score format:
+			\begin{quote}
+				\small ``Answer with one of \{\}. Do not explain your answer.''
+			\end{quote}
+			\item \textbf{Categorical annotations} $\rightarrow$ Cohen's $\kappa$.
+			\item \textbf{Graded annotations} $\rightarrow$ Spearman's $\rho$.
+			\item A human \textbf{upper bound} is estimated by comparing individual raters with aggregated human judgments.
+			\item CoT, few-shot prompts, and prompt paraphrases are also tested, but \textbf{do not produce systematic improvements}.
+		\end{itemize}
+		
+		\vspace{0.1cm}
+		\begin{block}{Interpretation}
+			High agreement means an LLM reproduces the human annotation pattern for that \emph{specific task}; it does not establish a universally good judge.
+		\end{block}
+	\end{frame}
+	
+	% Slide 5 --- ~55 sec
+	\begin{frame}{Result 1: There Is No Universal LLM Judge}
+		\framesubtitle{Performance varies strongly across datasets and properties}
+		
+		\begin{table}
+			\centering
+			\small
+			\begin{tabular}{lcccc}
+				\toprule
+				& GPT-4o & Llama-3.1-70B & Mixtral-8x22B & Gemini-1.5 \\
+				\midrule
+				Avg.\ categorical $\kappa$ & 0.28 & 0.28 & 0.24 & 0.22 \\
+				Avg.\ graded $\rho$        & 0.50 & 0.43 & 0.44 & 0.43 \\
+				\bottomrule
+			\end{tabular}
+		\end{table}
+		
+		\begin{itemize}
+			\item GPT-4o performs best in several settings, but \textbf{open models are often close and sometimes better}.
+			\item Example: on categorical CoLa, Mixtral-8x7B reaches $\kappa=0.55$ vs.\ GPT-4o's $0.34$.
+			\item On SummEval graded quality, Mixtral-8x22B reaches $\rho=0.54$ vs.\ GPT-4o's $0.35$.
+			\item \textbf{No single model dominates every evaluation property.}
+		\end{itemize}
+		
+		{\tiny Values reproduced from Table 1 of Bavaresco et al. (2025).}
+	\end{frame}
+	
+	% Slide 6 --- ~55 sec
+	\begin{frame}{Result 2: LLMs Agree More with Non-Experts}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.54\textwidth}
+			\centering
+			\safeimage[width=\textwidth]{images/1/fig2_experts_vs_nonexperts.png}
+			
+			\column{0.44\textwidth}
+			\small
+			\begin{itemize}
+				\item For graded annotations, \textbf{every evaluated model} aligns better with non-expert than expert judgments.
+				\item One possible explanation: non-experts may rely more on surface-level cues, while experts apply stricter domain-specific criteria.
+				\item The authors explicitly call this explanation \textbf{speculative}.
+			\end{itemize}
+			
+			\vspace{0.1cm}
+			\textbf{Implication:} ``Agreement with humans'' depends on \textbf{which humans}.
+		\end{columns}
+	\end{frame}
+	
+	% Slide 7 --- ~55 sec
+	\begin{frame}{Result 3: Judging Model Outputs Is Harder}
+		\centering
+		\safeimage[width=0.87\textwidth]{images/1/fig4_human_vs_machine.png}
+		
+		\vspace{-0.1cm}
+		\begin{itemize}
+			\item Across both categorical and graded annotations, models show \textbf{better human alignment on human-written language}.
+			\item Alignment drops when evaluating \textbf{machine-generated outputs}---exactly the setting where LLM-as-a-Judge is often deployed.
+			\item The paper connects this trend to prior evidence of possible bias toward model-generated text.
+		\end{itemize}
+		
+	\end{frame}
+	
+	% Slide 8 --- ~60 sec
+	\begin{frame}{Takeaways, Limitations, and the Bridge to JETTS}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.52\textwidth}
+			\textbf{What the paper establishes}
+			\begin{itemize}
+				\item LLM judges are \textbf{useful on some tasks}, including instruction following and mathematical reasoning traces.
+				\item Reliability varies by \textbf{task, property, human expertise, and text source}.
+				\item Recommendation: \textbf{validate and calibrate} an LLM judge against task-specific human annotations before deployment.
+			\end{itemize}
+			
+			\column{0.46\textwidth}
+			\textbf{Important limitations}
+			\begin{itemize}
+				\item Human--LLM agreement can be misleading if both share similar biases.
+				\item Existing datasets may have quality, representativeness, or leakage issues.
+				\item Mostly English; pairwise preference judging is left for future work.
+			\end{itemize}
+		\end{columns}
+		
+		\vspace{0.15cm}
+		\begin{block}{Transition to JETTS}
+			This paper asks: \textbf{``Does the judge reproduce human judgments?''}\\
+			JETTS asks the next question: \textbf{``Is the judge actually useful inside test-time scaling?''}
+		\end{block}
+		
+		{\tiny Paper: Bavaresco et al., ``LLMs instead of Human Judges?'', ACL 2025.}
+	\end{frame}
+	
+	
+	
+	\begin{frame}[standout]
+		\hypertarget{paper2}{}
+		\Large Paper 2:\\Evaluating Judges as Evaluators\\
+		\normalsize The JETTS Benchmark of LLM-as-Judges as Test-Time Scaling Evaluators
+	\end{frame}
+	%%%%%%%%%%% PAPER 2 %%%%%%%%%%%
+	% Slide 2 --- ~50 sec
+	\begin{frame}{Motivation: Evaluation Becomes Part of Inference}
+		\begin{itemize}
+			\item Test-time scaling gives a generator LLM extra compute during inference.
+			\item This usually needs an \textbf{evaluator}: choose the best sample, guide a search tree, or critique a draft.
+			\item Reward models are common, but LLM judges are attractive because they are \textbf{instructable} and can produce \textbf{natural-language critiques}.
+		\end{itemize}
+		
+		\vspace{0.15cm}
+		\begin{block}{Central question}
+			Are LLM judges actually useful evaluators when they are placed inside test-time scaling algorithms?
+		\end{block}
+		
+		\vspace{0.1cm}
+		\textbf{Why this matters:} a judge that looks good on a static benchmark may still fail when it must improve a generator's final output.
+	\end{frame}
+	
+	% Slide 3 --- ~55 sec
+	\begin{frame}{Main Contribution: JETTS}
+		\framesubtitle{Judge Evaluation for Test-Time Scaling}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.47\textwidth}
+			\small
+			\begin{itemize}
+				\item First systematic benchmark for using LLM judges as \textbf{test-time scaling evaluators}.
+				\item Evaluates \textbf{10 judge models} from 7B to 70B parameters.
+				\item Uses \textbf{8 generator models} from 6.7B to 72B parameters.
+				\item Covers three domains: \textbf{math}, \textbf{code}, and \textbf{instruction following}.
+			\end{itemize}
+			
+			\column{0.51\textwidth}
+			\centering
+			\safeimage[width=\textwidth]{images/2/fig1_tasks_leaderboard.png}
+		\end{columns}
+		
+		\vspace{0.05cm}
+		{\tiny Figure 1 from Zhou et al. (2025): three JETTS tasks and aggregate leaderboard.}
+	\end{frame}
+	
+	% Slide 4 --- ~55 sec
+	\begin{frame}{What Does JETTS Measure?}
+		\framesubtitle{A judge is evaluated by the improvement it brings}
+		\begin{itemize}
+			\item JETTS does \textbf{not} only ask whether the judge agrees with labels.
+			\item It asks whether judge-guided computation improves the generator relative to simpler baselines.
+		\end{itemize}
+		
+		\vspace{0.05cm}
+		\begin{block}{Normalized helpfulness for reranking and beam search}
+			\[
+			h = \frac{p_{\text{judge}} - p_{\text{greedy}}}{p_{\text{oracle}} - p_{\text{greedy}}}
+			\]
+		\end{block}
+		
+		\begin{itemize}
+			\item $h=0$: no better than greedy decoding.
+			\item $h<0$: judge actively hurts performance.
+			\item $h=1$: oracle selection among available candidates.
+		\end{itemize}
+	\end{frame}
+	
+	% Slide 5 --- ~60 sec
+	\begin{frame}{Task 1: Response Reranking}
+		\framesubtitle{Choose the best complete response among 10 candidates}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.55\textwidth}
+			\small
+			\begin{itemize}
+				\item Generate one greedy response and nine sampled responses.
+				\item Judges select the best candidate by:
+				\begin{itemize}
+					\item pairwise round-robin comparison, or
+					\item single-response rating.
+				\end{itemize}
+				\item \textbf{Main result:} pairwise reranking is much stronger than single-rating.
+				\item Judges are competitive with outcome reward models, especially for instruction following.
+			\end{itemize}
+			
+			\column{0.43\textwidth}
+			\centering
+			\safeimage[width=\textwidth]{images/2/fig2_rewardbench_vs_jetts.png}
+		\end{columns}
+		
+		\vspace{0.1cm}
+		\begin{block}{Important nuance}
+			RewardBench can make small judges look close to large judges, but JETTS reveals a stronger scale gap in actual test-time scaling use.
+		\end{block}
+	\end{frame}
+	
+	% Slide 6 --- ~60 sec
+	\begin{frame}{Task 2: Step-Level Beam Search}
+		\framesubtitle{Use the judge to guide partial reasoning paths}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.52\textwidth}
+			\small
+			\begin{itemize}
+				\item The generator produces candidate \textbf{next steps}; the judge keeps the most promising paths.
+				\item JETTS uses a $(10,2)$ beam search with depth up to 10.
+				\item This is harder than reranking because the judge must assess \textbf{unfinished partial responses}.
+			\end{itemize}
+			
+			\vspace{0.1cm}
+			\textbf{Main result:}
+			\begin{itemize}
+				\item LLM judges lag behind a small process reward model.
+				\item Larger judges help math and instruction-following more than code.
+			\end{itemize}
+			
+			\column{0.46\textwidth}
+			\centering
+			\safeimage[width=\textwidth]{images/2/fig9_beam_search.png}
+		\end{columns}
+	\end{frame}
+	
+	% Slide 7 --- ~55 sec
+	\begin{frame}{Task 3: Critique-Based Refinement}
+		\framesubtitle{The promised advantage of LLM judges mostly fails here}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.52\textwidth}
+			\small
+			\begin{itemize}
+				\item Start from a seed response.
+				\item Judge gives a score and natural-language critique.
+				\item Generator revises the answer; the process repeats for 9 rounds.
+				\item Final responses are reranked.
+			\end{itemize}
+			
+			\vspace{0.1cm}
+			\textbf{Main result:}
+			\begin{itemize}
+				\item No judge yields beneficial refinement across task categories.
+				\item Critiques often emphasize style over correctness and do not reliably fix errors.
+			\end{itemize}
+			
+			\column{0.46\textwidth}
+			\centering
+			\safeimage[width=\textwidth]{images/2/fig11_refinement.png}
+		\end{columns}
+	\end{frame}
+	
+	% Slide 8 --- ~65 sec
+	\begin{frame}{Final Takeaways and Link to the Previous Paper}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.50\textwidth}
+			\textbf{Key findings}
+			\begin{itemize}
+				\item LLM judges can help with \textbf{response reranking}.
+				\item They are weaker than \textbf{process reward models} for step-level search.
+				\item Current critiques are not reliable tools for response refinement.
+			\end{itemize}
+			
+			\column{0.48\textwidth}
+			\textbf{Limitations and implications}
+			\begin{itemize}
+				\item Better static evaluation scores do not guarantee better test-time scaling utility.
+				\item Coding remains especially difficult for judge-guided scaling.
+				\item Future judges need better reasoning, not only better final verdicts.
+			\end{itemize}
+		\end{columns}
+		
+		\vspace{0.15cm}
+		\begin{block}{Connection to ``LLMs instead of Human Judges?''}
+			The first paper asks: \textbf{Do LLM judges agree with humans?}\\
+			JETTS asks: \textbf{Can LLM judges improve generation when used as evaluators during inference?}
+		\end{block}
+	\end{frame}
+	
+	
+	
+	\section{Category 2: Bias Quantification \& Fairness Analysis}
+	
+	\begin{frame}[standout]
+		\hypertarget{paper3}{}
+		\Large Paper 3:\\An Empirical Analysis of Uncertainty in Large Language Model Evaluations
+	\end{frame}
+	\begin{frame}{Category Alignment \& Positioning}
+		\framesubtitle{Positioning in the Four-Pillar Taxonomy}
+		\begin{itemize}
+			\item \textbf{Taxonomy Alignment:} Category 2: Bias Quantification \& Fairness Analysis
+			\item \textbf{Beyond Static Prejudices:} While prior literature focuses heavily on static evaluator biases (e.g., length, position, and brand preference), this work explores \textbf{dynamic stability}.
+			\item \textbf{Internal States:} Shifting focus from verbalized outputs to internal logit probability distributions of the evaluator.
+			\item \textbf{Systemic Failure:} Demonstrating how hidden evaluator uncertainty leads to fragile, non-reproducible model rankings.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Paper Overview \& Core Goals}
+		\framesubtitle{An Empirical Analysis of Uncertainty in LLM-as-a-Judge}
+		\begin{itemize}
+			\item \textbf{The Core Problem:} Automated LLM judges are widely used to replace human raters, yet their internal evaluation confidence remains unquantified and volatile.
+			\item \textbf{The Dual-Uncertainty Paradigm:} Real-world evaluations depend on a complex interaction between the judge's certainty and the candidate's generation certainty.
+			\item \textbf{Three-Step Research Agenda:}
+			\begin{enumerate}
+				\item \textbf{Existence:} Measuring raw logit probabilities to prove uncertainty exists across major model families.
+				\item \textbf{Mitigation:} Testing prompt formatting styles to stabilize decision boundaries.
+				\item \textbf{Utilization:} Training an uncertainty-aware judge to spot hallucinations in out-of-distribution (OOD) scenarios.
+			\end{enumerate}
+		\end{itemize}
+	\end{frame}
+	
+	% TODO SCREENSHOT: [Extract Figure 1 from the paper emperical_2.pdf showing the Raccoon trait example and save it as images/1/raccoon_concept.png]
+	\begin{frame}{The Dual-Uncertainty Interaction}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.9\textwidth]{images/3/raccoon_concept.png}
+			\caption{Visualizing the interplay of Candidate Response Confidence and Evaluator Judge Confidence.}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Part 1: Quantifying Uncertainty (Existence)}
+		\framesubtitle{Deep Technical Mechanics of Logit-Based Extraction}
+		\begin{itemize}
+			\item \textbf{Logit-Based Probabilities:} Instead of prompting judges to verbalize confidence (which suffers from poor numeric calibration), this work extracts the raw logits directly at the last layer of generation.
+			\item \textbf{Evaluation Confidence:} The precise probability of the specific token representing the final decision (e.g., the score "7" in absolute grading, or "1", "2", "Tie" in pairwise comparison).
+			\item \textbf{Response Confidence:} Calculated as the mathematical average of the generation probabilities of all tokens in the candidate's output.
+			\item \textbf{Zero-Cost Metadata:} Extracted directly during inference, bypassing the need for computationally expensive multi-sample consistency checks.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Part 2: Mitigating Uncertainty (Mitigation)}
+		\framesubtitle{Prompt Restructuring and Structural Calibration}
+		\begin{itemize}
+			\item \textbf{Format-Induced Doubt:} Default templates prompt judges to output the score first. This forces an immediate decision under high attention entropy, dispersing the probability mass.
+			\item \textbf{Chain-of-Thought (CoT) Calibration:} Forcing the judge to generate reasoning before the verdict token acts as a natural logit stabilizer, concentrating probability mass on the final score token.
+			\item \textbf{Self-Generated References:} Instructing the judge to write its own reference answer first provides a solid comparative anchor, reducing rating volatility.
+			\item \textbf{Post-Training Stabilization:} Specialized evaluator models (e.g., Prometheus2) trained in CoT formats display remarkably high confidence, but suffer from sensitivity to distribution shifts.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Part 3: Utilizing Uncertainty (ConfiLM)}
+		\framesubtitle{Inherent Doubt as a Hallucination Detector}
+		\begin{itemize}
+			\item \textbf{The Ingestion Concept:} Candidate models express lower token probabilities when attempting to hallucinate facts. By feeding this uncertainty into the judge, the judge can detect errors.
+			\item \textbf{The Verbalization Bridge:} LLMs struggle with continuous numerical float values in prompts. The authors map candidate logits into discrete natural language statements (e.g., "Highly confident", "Neutral", "Clearly doubtful").
+			\item \textbf{ConfiLM Fine-Tuning:} Fine-tuning Llama-3-8B-Instruct on Alpaca data augmented with these verbalized confidence statements.
+			\item \textbf{The Olympic 2024 Dataset:} A manually curated, 220-instance out-of-distribution (OOD) testing suite annotated by PhD-level experts (97.27\% agreement) to evaluate real-time factual robustness.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Part 3: Utilizing Uncertainty (ConfiLM)}
+		\framesubtitle{Inherent Doubt as a Hallucination Detector}
+		\begin{itemize}
+			\item \textbf{The Ingestion Concept:} Candidate models express lower token probabilities when attempting to hallucinate facts. By feeding this uncertainty into the judge, the judge can detect errors.
+			\item \textbf{The Verbalization Bridge:} LLMs struggle with continuous numerical float values in prompts. The authors map candidate logits into discrete natural language statements (e.g., "Highly confident", "Neutral", "Clearly doubtful").
+			\item \textbf{Confidence Buckets:} Ten evenly-spaced ranges from [0.0, 0.1) $\rightarrow$ \textit{"Complete doubt"} up to [0.9, 1.0] $\rightarrow$ \textit{"Absolute confidence"}, with \textit{"Neutral"} at the midpoint [0.5, 0.6).
+			\item \textbf{ConfiLM Fine-Tuning:} Fine-tuning Llama-3-8B-Instruct on Alpaca data augmented with these verbalized confidence statements.
+			\item \textbf{The Olympic 2024 Dataset:} A manually curated, 220-instance out-of-distribution (OOD) testing suite annotated by PhD-level experts (97.27\% agreement) to evaluate real-time factual robustness.
+		\end{itemize}
+	\end{frame}
+	
+	% TODO SCREENSHOT: [Extract Figure 2 from the paper emperical_2.pdf showing the research pipeline diagram and save it as images/1/pipeline.png]
+	\begin{frame}{Multi-Phase Experimental Pipeline}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.9\textwidth]{images/3/pipeline.png}
+			\caption{The three sequential experimental phases: Existence, Mitigation, and Utilization.}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Key Empirical Findings}
+		\framesubtitle{Consolidated Behavioral Observations}
+		\begin{itemize}
+			\item \textbf{Single-Answer vs. Pairwise Gap:} Absolute grading forces judges to evaluate in isolation, leading to high internal doubt. Pairwise comparisons provide relative anchors, resulting in highly decisive and confident assessments.
+			\item \textbf{Self-Preference Bias:} Evaluations within the same model family (e.g., Llama assessing Llama) result in artificially inflated ratings paired with unwarranted confidence spikes due to shared pre-training and stylistic overlap.
+			\item \textbf{The Capability Paradox:} General capability on reasoning benchmarks does not prevent evaluation doubt. Highly capable models like GPT-4o exhibit high uncertainty in default grading formats compared to less advanced models.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{ConfiLM OOD Performance}
+		\framesubtitle{Spotting Subtle Hallucinations in Writing Tasks}
+		\begin{itemize}
+			\item \textbf{OOD Challenges:} Standard judges fail in highly specific OOD domains (like real-time sports results) because they rely on in-distribution training data and overlook factual inaccuracies.
+			\item \textbf{The "Rugby Sevens" Case Study:} When a candidate model generated a news report with a fabricated date, GPT-4o and standard fine-tuned models chose the hallucinated, verbose response.
+			\item \textbf{The ConfiLM Victory:} By ingesting the verbalized low-confidence of the candidate, ConfiLM correctly flagged the response as inaccurate and penalized the hallucination.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Core Framework Strengths}
+		\begin{itemize}
+			\item \textbf{Dual-Uncertainty Interface:} Establishes the first unified framework integrating candidate generation doubt with judge decision confidence.
+			\item \textbf{Zero-Cost Calibration:} Demonstrates that Chain-of-Thought (CoT) acts as a computationally free, inference-time logit stabilizer.
+			\item \textbf{The Verbalization Bridge:} Successfully bypasses the numerical limits of language models by translating float values into natural adjectives.
+			\item \textbf{Expert-Curated Benchmark:} The Olympic 2024 dataset provides a rigorous, highly aligned OOD testbed for automated judges.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Operational Limitations}
+		\begin{itemize}
+			\item \textbf{Closed-Source API Barrier:} Logit extraction is impossible on proprietary commercial platforms (such as Claude and Gemini) that withhold token probabilities.
+			\item \textbf{Inference Latency Overhead:} Forcing a detailed explanation before outputting the score token elevates generation costs and runtime latency.
+			\item \textbf{Exposure Bias in SFT:} Specialized judges fine-tuned on rigid templates suffer from high scoring volatility when exposed to unfamiliar domains.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Critical Strategic Outlook}
+		\framesubtitle{Directions Proposed in the Paper's Discussion (\S6)}
+		\begin{itemize}
+			\item \textbf{Confidence-Triggered Escalation:} Future AI-evaluation platforms should establish automated confidence thresholds, triggering selective escalation to human raters for low-confidence judgments.
+			\item \textbf{Multimodal Uncertainty:} Extending the framework to measure uncertainty across image, audio, and video inputs in multi-modal judges.
+			\item \textbf{Multi-Turn Conversation Decay:} Investigating how evaluation uncertainty propagates or decays across complex, multi-turn dialogues.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}[standout]
+		\hypertarget{paper4}{}
+		\Large Paper 4:\\Preference Leakage: A Contamination Problem in LLM-as-a-Judge
+	\end{frame}
+	
+	\begin{frame}{Context: The Evolution of Model Evaluation}
+		\begin{itemize}
+			\item \textbf{Shift in Evaluation Paradigms}:
+			\begin{itemize}
+				\item Traditional lexical n-gram metrics (BLEU, ROUGE) fail to capture semantic nuances in open-ended LLM outputs.
+				\item \textbf{LLM-as-a-Judge} has emerged as the industry standard for scalable, fast, and human-aligned model benchmarking.
+			\end{itemize}
+			\vspace{0.25cm}
+			\item \textbf{The Synthetic Data Engine}:
+			\begin{itemize}
+				\item Modern LLM alignment relies heavily on synthetic datasets generated by state-of-the-art teacher models (e.g., GPT-4o).
+			\end{itemize}
+			\vspace{0.25cm}
+			\item \textbf{The Core Vulnerability}:
+			\begin{itemize}
+				\item When the model producing the training data and the model judging the student share architectural or family ties, systemic evaluation bias occurs.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Category Alignment: Data vs. Preference Leakage}
+		\begin{itemize}
+			\item \textbf{Data Leakage (Classical Contamination)}:
+			\begin{itemize}
+				\item Direct overlap between pre-training/fine-tuning datasets and evaluation benchmark test sets.
+				\item Model simply memorizes specific ground-truth questions and answers.
+			\end{itemize}
+			\vspace{0.35cm}
+			\item \textbf{Preference Leakage (Evaluator Contamination)}:
+			\begin{itemize}
+				\item Structural, familial, or distillation relatedness between Data Generator ($M_G$) and Judge ($M_J$).
+				\item Preferences are transferred to Student ($M_S$) via synthetic training data ($D_{syn}$).
+				\item Evaluator inflates scores based on inherited stylistic and structural priors rather than objective response correctness.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Overview Diagram: Preference vs. Data Leakage}
+		% TODO SCREENSHOT: [Extract Figure 1 from the paper showing comparison between data leakage and preference leakage and save it as images/1/figure1_overview.png]
+		\begin{figure}
+			\centering
+			\safeimage[width=0.85\textwidth]{images/4/figure1_overview.png}
+			\caption{Conceptual Architecture of Preference Leakage and Model Lineage Relationships}
+		\end{figure}
+	\end{frame}
+	
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% SECTION 2: Methodology & Detailed Pipeline
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\section{Methodology \& Experimental Pipeline}
+	
+	\begin{frame}{End-to-End Experimental Pipeline}
+		\begin{itemize}
+			\item \textbf{Stage 1: Seed Sampling \& Prompt Extraction}:
+			\begin{itemize}
+				\item Sampled 30,000 diverse open-ended prompts across diverse domains from UltraFeedback.
+			\end{itemize}
+			\item \textbf{Stage 2: Synthetic Data Generation ($M_G \rightarrow D_{syn}$)}:
+			\begin{itemize}
+				\item Teacher models ($M_G$) generate high-quality candidate responses to form instruction-tuning datasets.
+			\end{itemize}
+			\item \textbf{Stage 3: Student Model Post-Training ($M_S$)}:
+			\begin{itemize}
+				\item Base models (Mistral-7B, Qwen-2.5-14B) are trained on $D_{syn}$ via SFT, DPO, or In-Context Learning (ICL).
+			\end{itemize}
+			\item \textbf{Stage 4: Pairwise Evaluation \& PLS Calculation}:
+			\begin{itemize}
+				\item Judge models ($M_J$) evaluate $M_S$ against baseline models on Arena-Hard and AlpacaEval 2.0 to quantify score inflation.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Part 1: Problem Definition \& Lineage Taxonomy}
+		\begin{itemize}
+			\item \textbf{Conceptual Formulation}:
+			\begin{itemize}
+				\item Evaluation score assigned by $M_J$ to $M_S$ is systematically inflated when $M_G$ is related to $M_J$.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Three Lineage Relatedness Categories}:
+			\begin{enumerate}
+				\item \textbf{Same Model}: $M_G \equiv M_J$ (e.g., GPT-4o generates synthetic training data and later evaluates the student model).
+				\item \textbf{Inheritance}: $M_J$ is fine-tuned directly on $M_G$'s outputs or shares an identical fine-tuning lineage.
+				\item \textbf{Same Model Family}: $M_G$ and $M_J$ share architectural design, tokenizers, and pre-training data corpora (e.g., GPT-4o and GPT-4-Turbo).
+			\end{enumerate}
+			\vspace{0.2cm}
+			\item \textbf{Key Novelty \#1}:
+			\begin{itemize}
+				\item First formal taxonomy defining evaluator-generator dependency as an implicit bias channel distinct from simple self-enhancement.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Part 2: Experimental Controls \& Metric Mechanics}
+		\begin{itemize}
+			\item \textbf{Controlled Experimental Setup}:
+			\begin{itemize}
+				\item \textbf{Data Generators / Judges}: GPT-4o, Gemini-1.5-Flash, LLaMA-3.3-70B.
+				\item \textbf{Base Students}: Unaligned base models to eliminate pre-existing instruction-tuning contamination.
+				\item \textbf{Benchmarks}: Arena-Hard (500 challenging prompts) and AlpacaEval 2.0 (805 prompts).
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Preference Leakage Score (PLS) Formulation}:
+			\begin{itemize}
+				\item $PLS = \text{WinRate}(M_S \text{ judged by Related } M_J) - \text{WinRate}(M_S \text{ judged by Control } M_{ctrl})$.
+				\item Controls for position bias (swapping model order) and length bias.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Key Novelty \#2}:
+			\begin{itemize}
+				\item A rigorous cross-evaluation benchmarking framework that isolates style inheritance from genuine reasoning quality.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Part 3: Mechanistic Probing \& Stealth Bias}
+		\begin{itemize}
+			\item \textbf{The Recognition Paradox}:
+			\begin{itemize}
+				\item Can judges consciously detect outputs from their related student models?
+				\item Direct probing reveals LLM judges perform near random chance ($30\% - 53\%$ accuracy) at identification.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Classifier Detectability}:
+			\begin{itemize}
+				\item A simple linear classifier or lightweight BERT model achieves over $82.4\%$ accuracy in identifying student generations.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Spurious Features as Conduits}:
+			\begin{itemize}
+				\item Bias is driven by surface-level artifacts: formatting templates, markdown headers, bullet-point frequency, and tone.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Key Novelty \#3}:
+			\begin{itemize}
+				\item Proving preference leakage is a subconscious phenomenon where LLM judges reward stylistic alignment without explicit awareness.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% SECTION 3: Empirical Findings
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\begin{frame}{Key Empirical Results (Verbal Summary)}
+		\begin{itemize}
+			\item \textbf{Widespread Score Inflation}:
+			\begin{itemize}
+				\item Significant positive PLS across all major model families (reaching up to $37.1\%$ win-rate inflation on Arena-Hard).
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Model Scale Impact}:
+			\begin{itemize}
+				\item Smaller student models (1B--3B parameters) show \textbf{higher} leakage scores because they memorize surface-level response templates more aggressively.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Post-Training Method Dynamics}:
+			\begin{itemize}
+				\item \textbf{SFT}: Maximum leakage ($23.6\%$ average) due to heavy stylistic imitation.
+				\item \textbf{DPO}: Significantly reduced leakage ($5.2\%$) by penalizing stylistic repetition.
+				\item \textbf{ICL}: Minimal to zero leakage ($-2.7\%$) as core weights remain untouched.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Domain \& Task Sensitivity}:
+			\begin{itemize}
+				\item Highest bias in open-ended creative writing and coding; lowest in deterministic math and logic problems.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% SECTION 4: Core Framework Strengths
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\begin{frame}{Strengths \& Methodological Rigor}
+		\begin{itemize}
+			\item \textbf{Pioneering Problem Formulation}:
+			\begin{itemize}
+				\item Uncovers a systemic vulnerability in the synthetic data lifecycle that undermines community leaderboard integrity.
+			\end{itemize}
+			\vspace{0.3cm}
+			\item \textbf{Methodological Isolation}:
+			\begin{itemize}
+				\item Isolates confounding variables by starting exclusively with raw base models, avoiding instruction-tuning artifacts.
+			\end{itemize}
+			\vspace{0.3cm}
+			\item \textbf{Broad Practical Impact}:
+			\begin{itemize}
+				\item Demonstrates real-world implications for major public evaluations such as LMArena, AlpacaEval, and Open LLM Leaderboard.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% SECTION 5: Operational Limitations
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\begin{frame}{Limitations \& Experimental Constraints}
+		\begin{itemize}
+			\item \textbf{High Computational \& API Costs}:
+			\begin{itemize}
+				\item Full pairwise evaluation matrices across frontier models demand massive API query volume and compute overhead.
+			\end{itemize}
+			\vspace{0.3cm}
+			\item \textbf{Proprietary Black-Box Constraints}:
+			\begin{itemize}
+				\item Closed-source model providers do not disclose full pre-training data or exact model lineages, limiting complete tracking.
+			\end{itemize}
+			\vspace{0.3cm}
+			\item \textbf{Inefficacy of Simple Prompting Mitigation}:
+			\begin{itemize}
+				\item Standard system prompts or Chain-of-Thought (CoT) instructions fail to remove preference leakage without structural adjustments.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% SECTION 6: Strategic Outlook
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\begin{frame}{Future Directions \& Mitigation Strategies}
+		\begin{itemize}
+			\item \textbf{Strict Lineage Isolation}:
+			\begin{itemize}
+				\item Public leaderboards must enforce strict separation between data generation teacher models and benchmark judge models.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Post-Hoc Statistical Calibration}:
+			\begin{itemize}
+				\item Use held-out human judgment samples to dynamically adjust and normalize judge scoring distributions.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Multi-Judge Ensembling}:
+			\begin{itemize}
+				\item Combine evaluations from multiple non-related model families to cancel out model-family bias.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Stylistic Normalization Pipelines}:
+			\begin{itemize}
+				\item Pre-process responses through neutralizing paraphrasers to strip surface-level formatting artifacts before judging.
+			\end{itemize}
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Summary \& Key Takeaways}
+		\begin{itemize}
+			\item \textbf{Takeaway 1}: Preference leakage is an insidious, subconscious contamination mechanism in modern LLM evaluation.
+			\vspace{0.25cm}
+			\item \textbf{Takeaway 2}: Judges favor student models that mirror their surface-level style, formatting, and structural cadence.
+			\vspace{0.25cm}
+			\item \textbf{Takeaway 3}: SFT intensifies leakage, whereas DPO, ICL, and post-hoc calibration offer effective defense pathways.
+			\vspace{0.25cm}
+			\item \textbf{Core Recommendation}: Decouple evaluation judges completely from synthetic training data pipelines for trustworthy benchmarks.
+		\end{itemize}
+	\end{frame}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\section{Category 3: Scalability Limits \& Benchmark Robustness}
+	%%%%% Paper 5
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\begin{frame}[standout]
+		\hypertarget{paper5}{}
+		\Large Paper 5:\\Is LLM-as-a-Judge Robust? Investigating Universal Adversarial Attacks on Zero-shot LLM Assessment
+	\end{frame}
+	
+	
+	\begin{frame}{Category Alignment \& Positioning}
+		\framesubtitle{Positioning in the Four-Pillar Taxonomy}
+		\begin{itemize}
+			\item \textbf{Taxonomy Alignment:} Category 3: Scalability Limits \& Benchmark Robustness
+			\item \textbf{Security Perspective:} While prior work focuses on improving judge accuracy, this work examines the vulnerability of LLM-as-a-judge to adversarial manipulation.
+			\item \textbf{Universal Adversarial Suffixes:} Short phrases appended to any text can manipulate judge LLMs into predicting maximum scores regardless of actual quality.
+			\item \textbf{Transferable Attacks:} Attacks learned on small open-source models (FlanT5-3B) successfully transfer to commercial giants (GPT-3.5).
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Problem Statement \& Key Finding}
+		\framesubtitle{Universal Adversarial Attacks on LLM Assessment}
+		\begin{itemize}
+			\item \textbf{Paradigm Shift}: LLMs are widely used as zero-shot assessors for evaluating exams and benchmarking NLP systems.
+			\vspace{0.2cm}
+			\item \textbf{Core Research Question}: Are these automated judges robust against adversarial manipulation?
+			\vspace{0.2cm}
+			\item \textbf{Key Finding}: Appending a short \textbf{universal adversarial suffix} to any text can trick judge LLMs into predicting maximum scores, regardless of actual quality.
+			\vspace{0.2cm}
+			\item \textbf{Attack Model}: adversaries may not know or have access to the judge-LLM --- a surrogate-based black-box attack is proposed.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{The Attack Mechanism}
+		\framesubtitle{How Universal Adversarial Phrases Deceive LLM Judges}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.85\textwidth]{images/5/figure1.png}
+			\caption{[PLACEHOLDER] Figure 1: Universal adversarial attack on absolute scoring (left) vs comparative assessment (right).}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Threat Model: Mathematical Formulation}
+		\framesubtitle{Concatenative Universal Adversarial Attack}
+		\begin{itemize}
+			\item \textbf{Adversarial Perturbation}: Original text $x$ is modified as $x + \delta$, where $\delta$ is a short phrase of length $L \ll |x|$.
+			\vspace{0.3cm}
+			\item \textbf{Universal Attack}: A single phrase $\delta^*$ learned to boost rank/score across all inputs:
+			\vspace{0.2cm}
+			\begin{block}{Mathematical Formulation}
+				\[
+				\bar{r}(\delta) = \frac{1}{NM} \sum_{m} \sum_{n} \hat{r}'^{(m)}_n(\delta)
+				\]
+				
+				\[
+				\delta^* = \arg\min_{\delta} \bar{r}(\delta)
+				\]
+			\end{block}
+			\vspace{0.3cm}
+			\item \textbf{Surrogate Model Transfer}: Attack learned on open-source FlanT5-xl (3B) transfers to closed models (Llama2-7B, Mistral-7B, GPT-3.5).
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Attack Algorithm: Greedy Search}
+		\framesubtitle{Token-by-Token Universal Phrase Discovery}
+		\begin{itemize}
+			\item \textbf{Challenge}: Exhaustive search over vocabulary is computationally infeasible.
+			\vspace{0.2cm}
+			\item \textbf{Greedy Approximation}: Iteratively append the token that maximizes expected score:
+			\vspace{0.2cm}
+			\begin{block}{Greedy Update}
+				\[
+				\delta^*_{l+1}
+				=
+				\arg\max_{\delta \in V}
+				\mathbb{E}\!\left[
+				s(x+\delta^*_{1:l}+\delta)
+				\right]
+				\]
+			\end{block}
+			\vspace{0.2cm}
+			\item \textbf{Vocabulary Source}: English word corpus from NLTK package.
+			\vspace{0.2cm}
+			\item \textbf{Key Observation}: Gradient-based methods (GCG) perform worse than simple greedy search for this discrete prompt space.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Experimental Setup}
+		\framesubtitle{Datasets, Models, and Evaluation Protocol}
+		\begin{itemize}
+			\item \textbf{Datasets}:
+			\begin{itemize}
+				\item \textbf{SummEval}: 100 passages, 16 summaries each, evaluated on coherence, consistency, fluency, relevance.
+				\item \textbf{TopicalChat}: 60 dialogues, 6 responses each, evaluated on coherence, continuity, engagingness, naturalness.
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Models}:
+			\begin{itemize}
+				\item \textbf{Surrogate}: FlanT5-xl (3B, encoder-decoder) for attack training.
+				\item \textbf{Targets}: Llama2-7B-chat, Mistral-7B-chat, GPT-3.5 (175B).
+			\end{itemize}
+			\vspace{0.2cm}
+			\item \textbf{Data Split}: 20\% development (attack learning on only 2 candidates), 80\% test.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Results: Surrogate Model Vulnerability}
+		\framesubtitle{Absolute Scoring vs. Comparative Assessment on FlanT5-xl}
+		
+		\begin{figure}
+			\centering
+			\safeimage[width=0.75\textwidth]{images/5/figure2.png}
+			\caption{Average rank vs. attack phrase length.}
+		\end{figure}
+		
+		\vspace{-0.2cm}
+		
+		\begin{center}
+			\small
+			\begin{tabular}{lcc}
+				\toprule
+				\textbf{Attack Type} & \textbf{No Attack (Score)} & \textbf{Attack (Score)} \\
+				\midrule
+				SUMM-ABS-OVE & 3.73 & 4.74 \\
+				SUMM-ABS-CON & 3.88 & 4.35 \\
+				TOPIC-ABS-OVE & 2.93 & 4.63 \\
+				TOPIC-ABS-CNT & 3.02 & 4.32 \\
+				\bottomrule
+			\end{tabular}
+			
+			
+			\captionof{table}{Table 3: 4-word attack phrases yield near-maximum scores}
+		\end{center}
+	\end{frame}
+	
+	\begin{frame}{Results: Transferability to Target Models}
+		\framesubtitle{Black-Box Attack Transfer from FlanT5-xl to Commercial LLMs}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.8\textwidth]{images/5/figure3.png}
+			\caption{Attack transferability from surrogate to Llama2, Mistral, and GPT-3.5.}
+		\end{figure}
+		\vspace{-0.50cm}
+		\textbf{Key Observations}:
+		\begin{itemize}
+			\item High transferability for absolute scoring --- same 4-word phrases fool GPT-3.5.
+			\item GPT-3.5 is more vulnerable to shorter attack phrases (longer ones overfit surrogate).
+			\item Comparative assessment remains structurally robust even under transfer.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Defense: Perplexity-Based Detection}
+		\framesubtitle{A Simple Yet Effective Adversarial Sample Detector}
+		
+		\begin{itemize}
+			\item \textbf{Why Perplexity?}: Universal adversarial phrases disrupt natural language flow, yielding high perplexity.
+			\item \textbf{Detection Mechanism}: Use Mistral-7B base model to compute perplexity. Classify input as adversarial if $\mathrm{perp} > \beta$.
+			\item \textbf{Performance}: F1 scores ranging from 0.70 to 0.81 on detection tasks.
+			\item \textbf{Limitation}: Adaptive attacks can jointly optimize for score inflation and text fluency (low perplexity), bypassing this defense.
+		\end{itemize}
+		
+		% Clean block with the formula
+		\begin{block}{Perplexity Calculation}
+			\[
+			\mathrm{perp} = -\frac{1}{|x|} \log(P_\theta(x))
+			\]
+		\end{block}
+	\end{frame}
+	
+	\begin{frame}{Critical Review: Strengths \& Limitations}
+		\framesubtitle{Balanced Assessment of the Study}
+		\begin{columns}
+			\column{0.5\textwidth}
+			\textbf{Strengths}:
+			\begin{itemize}
+				\item First systematic study of adversarial attacks on LLM-as-judge.
+				\item Practical black-box threat model with real transferability.
+				\item Identifies structural superiority of comparative over absolute assessment.
+			\end{itemize}
+			\column{0.5\textwidth}
+			\textbf{Limitations}:
+			\begin{itemize}
+				\item Greedy search only over discrete NLTK vocabulary; continuous embedding attacks unexplored.
+				\item Defense (perplexity) is superficial --- adaptive attacks can preserve fluency.
+				\item Training on only 2 candidates may overfit to specific distributions.
+				\item Zero-shot only; few-shot settings unexplored.
+			\end{itemize}
+		\end{columns}
+	\end{frame}
+	
+	\begin{frame}{Summary: Key Takeaways}
+		\begin{itemize}
+			\item \textbf{Vulnerability Confirmed}: LLM-as-a-Judge systems are highly susceptible to universal adversarial attacks on absolute scoring tasks.
+			\vspace{0.25cm}
+			\item \textbf{Transferability}: Attacks learned on small open-source models (FlanT5-3B) successfully transfer to commercial giants (GPT-3.5).
+			\vspace{0.25cm}
+			\item \textbf{Comparative > Absolute}: Pairwise comparison is structurally robust due to competing objectives across prompt orderings.
+			\vspace{0.25cm}
+			\item \textbf{Defense}: Perplexity detection offers initial protection but is insufficient against adaptive adversaries.
+			\vspace{0.25cm}
+			\item \textbf{Core Recommendation}: Use comparative assessment for high-stakes evaluation; absolute scoring should not be trusted without safeguards.
+		\end{itemize}
+	\end{frame}
+	
+	%%%%% Paper 6
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\begin{frame}[standout]
+		\hypertarget{paper6}{}
+		\Large Paper 6:\\TRACT: Regression-Aware Fine-tuning Meets Chain-of-Thought Reasoning for LLM-as-a-Judge
+	\end{frame}
+	
+	
+	
+	\begin{frame}{Category Alignment \& Positioning}
+		\framesubtitle{Positioning in the Four-Pillar Taxonomy}
+		\begin{itemize}
+			\item \textbf{Beyond Classification Loss:} While prior literature uses cross-entropy (CE) loss for score prediction, this work addresses the fundamental mismatch between classification-based training and numerical regression evaluation.
+			\item \textbf{Combining Best of Both Worlds:} TRACT integrates Chain-of-Thought (CoT) reasoning with regression-aware training to harness step-by-step reasoning while learning the numerical structure of scoring.
+			\item \textbf{Self-Generated CoTs:} A two-stage training pipeline that bridges the distribution gap between annotation CoTs and model-generated CoTs.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{The LLM-as-a-Judge Dilemma: Classification vs. Regression}
+		\framesubtitle{From Cross-Entropy to Regression-Aware Training}
+		\begin{itemize}
+			\item \textbf{Evaluation with LLMs:} LLM-as-a-judge has become the standard for scalable, human-aligned model benchmarking.
+			\item \textbf{Traditional Approach:} Standard methods use cross-entropy (CE) loss for fine-tuning, treating score prediction as a classification problem.
+			\item \textbf{Fundamental Problem:} CE loss ignores the numerical nature of scores; predicting score 5 when the true score is 1 is penalized the same as predicting score 2.
+			\item \textbf{RAFT Solution:} Regression-Aware Fine-Tuning (RAFT) addresses this using squared error loss, but sacrifices Chain-of-Thought (CoT) reasoning, leading to degraded performance.
+		\end{itemize}
+		\vspace{0.3cm}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.6\textwidth]{images/6/1.png}
+			\caption{Comparison of different approaches (Standard, RAFT, TRACT).}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Introducing TRACT: Bridging Reasoning and Regression}
+		\framesubtitle{Two-stage Regression-Aware Fine-tuning with CoT}
+		\begin{itemize}
+			\item \textbf{TRACT Method:} Combines CoT reasoning with regression-aware training through a novel CoT-RAFT objective.
+			\item \textbf{Loss Function:} The training objective combines CE loss for learning CoT reasoning and RAFT loss for accurate score prediction.
+			\item \textbf{Predictor Formulation:}
+			$\hat{y}_{CR}(x) = \sum_{y \in Y} p(\text{str}(y) | [x, \hat{s}]) \cdot y; \hat{s} \sim p(\cdot | x)$
+		\end{itemize}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.7\textwidth]{images/6/1a.png}
+			\caption{CoT-RAFT fine-tuning objective showing CE Loss (for CoT) and RAFT Loss (for Score).}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{The Distribution Shift Problem in CoT Generation}
+		\framesubtitle{Why Self-Generated CoTs Matter}
+		\begin{itemize}
+			\item \textbf{Training Phase:} Model is fine-tuned on CoTs generated by a powerful annotator (e.g., GPT-4).
+			\item \textbf{Inference Phase:} Model must predict scores based on its own self-generated CoTs.
+			\item \textbf{The Gap:} This creates a severe distribution shift between training and inference CoTs, significantly degrading performance.
+			\item \textbf{Empirical Evidence:} Table 3 shows RMSE gap of 0.51 between using annotation CoTs vs. self-generated CoTs for the stage-1 model.
+		\end{itemize}
+		\vspace{0.3cm}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.65\textwidth]{images/6/3.png}
+			\caption{RMSE analysis showing distribution shift between annotation and self-generated CoTs.}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{TRACT Two-Stage Architecture: Self-Generated CoTs}
+		\framesubtitle{Algorithm Overview}
+		\begin{itemize}
+			\item \textbf{Stage 1:} Fine-tune seed LLM ($p_0$) on ground truth scores and annotation CoTs from $p_a$ (GPT-4) using CoT-RAFT objective to obtain $p_s$.
+			\item \textbf{Data Generation:} Use $p_s$ to generate self-generated CoTs for all training data, pairing them with original ground truth scores to create $D_{self}$.
+			\item \textbf{Stage 2:} Fine-tune the original seed LLM ($p_0$) on $D_{self}$ using the same CoT-RAFT objective to obtain $p_{TRACT}$.
+		\end{itemize}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.75\textwidth]{images/6/1b.png}
+			\caption{Two-stage training pipeline (Stage 1 $\rightarrow$ Generate $\rightarrow$ Stage 2).}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Rigorous Experimental Setup}
+		\framesubtitle{Datasets, Models, and Implementation Details}
+		\begin{itemize}
+			\item \textbf{Base Models:} Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.2.
+			\item \textbf{Training Data:} Feedback Collection with approximately 100K samples generated by GPT-4.
+			\item \textbf{Test Datasets:} Four established benchmarks: Feedback Bench, FLASK, Vicuna Bench, and MT Bench.
+			\item \textbf{Evaluation Metrics:} Pearson's $r$, Spearman's $\rho$, and Kendall's $\tau$ correlation coefficients.
+			\item \textbf{Implementation:} LoRA (rank 8) via Llama-Factory library; vLLM for inference. Training takes $\sim$100 hours on a single NVIDIA RTX A6000.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Main Results: Redefining State-of-the-Art}
+		\framesubtitle{TRACT Consistently Outperforms All Baselines}
+		\begin{itemize}
+			\item \textbf{Outperforms Traditional CoT:} TRACT achieves Pearson's $r$ of 0.650 on Mistral vs. 0.557 for standard CE+CoT (row B.2).
+			\item \textbf{Beats Prior SOTA:} TRACT surpasses Prometheus-2-7B (best same-size model) by 0.059 average Pearson's $r$ without using additional data.
+			\item \textbf{Strong on Llama:} On Llama-3.1-8B, TRACT improves average Pearson's $r$ by 0.100 over the baseline.
+			\item \textbf{Robust Improvement:} Achieves best and second-best results across all four evaluation datasets.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Ablation Studies: What Makes TRACT Work?}
+		\framesubtitle{Component-wise Analysis}
+		\begin{itemize}
+			\item \textbf{Self-Generated CoTs are Critical:} Removing stage 2 (using GPT-4 CoTs at inference) causes 0.094 drop in Pearson's $r$.
+			\item \textbf{CoT-RAFT Loss is Essential:} Using CE loss with self-generated CoTs (row A.2) still underperforms by 0.033; using CE with self-generated CoTs (row A.3) degrades to 0.512.
+			\item \textbf{Stage 2 Must Start from Seed LLM:} Initializing stage 2 from $p_s$ (instead of $p_0$) severely degrades performance to 0.515 Pearson's $r$.
+			\item \textbf{Key Insight:} Self-generated CoTs are harmful with CE loss but beneficial with CoT-RAFT objective.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Inference Efficiency: Scaling Sampled CoTs}
+		\framesubtitle{TRACT with One CoT Outperforms Others with Five}
+		\begin{itemize}
+			\item \textbf{Stable Performance}
+			\item \textbf{Compute Efficiency}
+			\item \textbf{Low Variance}
+			\item \textbf{Practical Impact:} Enables high-accuracy evaluation with minimal computational cost in production environments.
+		\end{itemize}
+		\vspace{0.2cm}
+		\begin{figure}
+			\centering
+			\safeimage[width=0.6\textwidth]{images/6/figuree3.png}
+			\caption{Average Pearson's $r$ vs. number of sampled CoTs. TRACT (red) remains stable while baselines improve with more samples.}
+		\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Point-wise LLM-as-Judge vs. Reward Models}
+		\framesubtitle{Cross-Domain Generalization}
+		\begin{itemize}
+			\item \textbf{RewardBench Evaluation:} TRACT trained only on point-wise data achieves 0.736 accuracy on RewardBench (pairwise ranking), slightly below CLoud (0.759) but outperforming Prometheus-2-7B.
+			\item \textbf{CLoud Comparison:} CLoud (reward model) performs poorly on point-wise LLM-as-a-judge benchmarks, highlighting that RMs cannot handle fine-grained evaluation rubrics.
+			\item \textbf{Key Distinction:} Point-wise LLM-as-judge models can evaluate based on detailed rubrics and produce meaningful standalone scores, unlike reward models.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Comparative Analysis: Pros \& Cons}
+		\framesubtitle{Balanced Assessment of TRACT}
+		\begin{columns}
+			\column{0.5\textwidth}
+			\textbf{Strengths}:
+			\begin{itemize}
+				\item First method to successfully combine regression-aware loss with CoT reasoning.
+				\item Self-generated CoTs minimize distribution shift between training and inference.
+				\item Works well on RewardBench despite being trained only on point-wise data.
+			\end{itemize}
+			\column{0.5\textwidth}
+			\textbf{Limitations}:
+			\begin{itemize}
+				\item Requires access to output probabilities (not applicable to black-box APIs).
+				\item Higher training cost due to two-stage pipeline and intermediate data generation phase.
+			\end{itemize}
+		\end{columns}
+	\end{frame}
+	
+	\begin{frame}{Critical Review: Blind Spots and Hidden Flaws}
+		\framesubtitle{Self-Critique and Future Directions}
+		\begin{itemize}
+			\item \textbf{Linearity Assumption:} Using MSE assumes equal quality distance between scores 1-2 and 4-5, which is not psychologically valid for ordinal scales.
+			\item \textbf{Missing QWK Metric:} The gold standard for evaluating judges on 1-5 scales is Quadratic Weighted Kappa (QWK), which is notably absent.
+			\item \textbf{Hallucination Risk:} Stage 2 only optimizes for score prediction; no mechanism guarantees logical correctness of generated CoTs.
+			\item \textbf{Post-hoc Rationalization:} Heavy regression weighting may transform CoTs from analytical reasoning into justification artifacts for target numbers.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Summary: Key Takeaways}
+		\begin{itemize}
+			\item \textbf{Takeaway 1:} TRACT bridges the gap between regression-aware training (RAFT) and Chain-of-Thought reasoning (CoT).
+			\vspace{0.2cm}
+			\item \textbf{Takeaway 2:} Self-generated CoTs combined with CoT-RAFT loss are essential; CE loss with self-generated data actually harms performance.
+			\vspace{0.2cm}
+			\item \textbf{Takeaway 3:} TRACT achieves new SOTA with 0.650 Pearson's $r$ on Mistral, outperforming Prometheus-2-7B by 0.059 without additional training data.
+			\vspace{0.2cm}
+			\item \textbf{Takeaway 4:} The two-stage architecture (seed $\rightarrow$ $p_s$ $\rightarrow$ generate CoTs $\rightarrow$ retrain from seed) is crucial for success.
+			\vspace{0.2cm}
+			\item \textbf{Core Recommendation:} Use TRACT for high-accuracy, compute-efficient LLM-as-a-judge evaluation with CoT reasoning.
+		\end{itemize}
+	\end{frame}
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
 \end{document}
