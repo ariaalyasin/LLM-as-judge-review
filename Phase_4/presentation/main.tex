@@ -646,10 +646,15 @@
     \vspace{0.3cm}
     \item \textbf{Universal Attack}: A single phrase $\delta^*$ learned to boost rank/score across all inputs:
     \vspace{0.2cm}
-    \begin{blockcode}
-      $\bar{r}(\delta) = \frac{1}{NM} \sum_{m} \sum_{n} \hat{r}'^{(m)}_n(\delta)$
-      $\delta^* = \arg\min_{\delta} (\bar{r}(\delta))$
-    \end{blockcode}
+\begin{block}{Mathematical Formulation}
+\[
+\bar{r}(\delta) = \frac{1}{NM} \sum_{m} \sum_{n} \hat{r}'^{(m)}_n(\delta)
+\]
+
+\[
+\delta^* = \arg\min_{\delta} \bar{r}(\delta)
+\]
+\end{block}
     \vspace{0.3cm}
     \item \textbf{Surrogate Model Transfer}: Attack learned on open-source FlanT5-xl (3B) transfers to closed models (Llama2-7B, Mistral-7B, GPT-3.5).
   \end{itemize}
@@ -662,9 +667,16 @@
     \vspace{0.2cm}
     \item \textbf{Greedy Approximation}: Iteratively append the token that maximizes expected score:
     \vspace{0.2cm}
-    \begin{blockcode}
-      $\delta^*_{l+1} = \arg\max_{\delta \in V} \mathbb{E}[s(x + \delta^*_{1:l} + \delta)]$
-    \end{blockcode}
+\begin{block}{Greedy Update}
+\[
+\delta^*_{l+1}
+=
+\arg\max_{\delta \in V}
+\mathbb{E}\!\left[
+s(x+\delta^*_{1:l}+\delta)
+\right]
+\]
+\end{block}
     \vspace{0.2cm}
     \item \textbf{Vocabulary Source}: English word corpus from NLTK package.
     \vspace{0.2cm}
