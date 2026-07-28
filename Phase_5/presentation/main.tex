@@ -1,0 +1,301 @@
+
+\documentclass[10pt]{beamer}
+\usetheme[progressbar=frametitle]{metropolis}
+\usepackage{appendixnumberbeamer}
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{xspace}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{caption}
+\newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
+\newcommand{\safeimage}[2][]{%
+	\IfFileExists{#2}{\includegraphics[#1]{#2}}{%
+		\fbox{\parbox[c][0.28\textheight][c]{0.78\textwidth}{\centering Missing figure:\\ \texttt{\detokenize{#2}}}}%
+	}%
+}
+
+\title{LLM-as-a-Judge Reliability}
+\subtitle{Combined Presentation: Benchmarks, Biases, and Robustness}
+\date{}
+\author{Parsa Gholami, Aria Alyasin, Mohsen Shirazi}
+\institute{Sharif University of Technology}
+
+\begin{document}
+	
+	\begin{frame}[plain,shrink=10]
+		\titlepage
+	\end{frame}
+	
+	
+	\section{Category 1: Benchmarks \& Frameworks for Judges}
+	
+	
+	\section{Category 2: Bias Quantification \& Fairness Analysis}
+
+	\begin{frame}[standout]
+		\hypertarget{paper3}{}
+		\Large Paper 3:\\Safer or Luckier? LLMs as Safety Evaluators Are Not Robust to Artifacts
+	\end{frame}
+
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% PAPER 3: Safer or Luckier? LLMs as Safety Evaluators Are Not Robust to Artifacts
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	\begin{frame}{Category 2 Alignment}{Bias Quantification \& Fairness Analysis}
+	\begin{itemize}
+		\item \textbf{Category Theme:} Isolating, quantifying, and mitigating systemic flaws in LLM evaluators, rather than building a new alignment benchmark from scratch.
+		\item \textbf{Beyond Accuracy:} Moving past surface-level agreement-with-human metrics to test whether an evaluator is actually \emph{fair} and \emph{consistent} in how it reaches a verdict.
+		\item \textbf{Core Investigation:} How non-safety text artifacts (apologies, citations, formatting) introduce severe, measurable biases into safety judgments.
+		\item \textbf{High-Stakes Context:} Safety evaluators directly control model deployment, content filtering, and reward-model training, so an undetected bias here propagates downstream.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Introduction \& Motivation}{Safer or Luckier?}
+	\begin{itemize}
+		\item \textbf{The Core Problem:} LLMs are widely used as automated safety judges to decide which of two responses is safer, but their reliability in this specific role remains largely unverified.
+		\item \textbf{Key Question:} Are LLM judges actually reasoning about safety, or are they relying on shallow statistical shortcuts learned from post-training data correlations?
+		\item \textbf{Vulnerability to Artifacts:} Do superficial cues -- an apology, a fake citation, a chattier tone, even just the order of presentation -- skew a verdict that should depend only on content?
+		\item \textbf{Why It Matters Now:} Since judges are used to build leaderboards and train reward models, an undetected bias here silently corrupts every system built on top of it.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Study Roadmap}{What This Paper Actually Does}
+	\begin{itemize}
+		\item \textbf{In One Sentence:} Take a real, human-annotated safety-preference dataset, deliberately inject 5 controlled superficial artifacts into the completions, and re-ask 11 different LLM judges to re-evaluate the same pairs -- if a verdict changes, that shift is pure bias.
+		\item \textbf{RQ1 -- Robustness:} How sensitive are LLM safety judges to each of the 5 artifacts, measured at both the sample level and the model level?
+		\item \textbf{RQ2 -- Mitigation:} Can aggregating multiple judges into a jury reduce this sensitivity without sacrificing accuracy?
+		\item \textbf{RQ3 -- Confounds:} How much do other factors -- judge size, run-to-run consistency, and safety subdomain -- influence the results?
+		\item \textbf{Scale of the Test:} 11 judges $\times$ 5 model families $\times$ 5 safety domains $\times$ 5 artifacts $\times$ 2 test settings -- a fully crossed robustness audit, not a single spot-check.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}[shrink=5]{Artifact Taxonomy}{Injecting Controlled Text Features}
+	\begin{itemize}
+		\item \textbf{Apology:} Prepending apologetic refusal phrasing (e.g., ``I'm sorry, as an AI...'') to an otherwise unsafe completion, exploiting the correlation between refusals and safety in training data.
+		\item \textbf{Authority:} Adding a fake citation or link (e.g., ``According to Wikipedia...''), exploiting the fact that safe misinformation responses often cite sources.
+		\item \textbf{Halo Effect:} Appending a polite closing offer (e.g., ``Is there anything else I can help with?''), based on the psychological halo effect and its co-occurrence with safe refusals.
+		\item \textbf{Verbosity:} Semantic-preserving rephrasing that only increases response length, isolating length itself from any added information.
+		\item \textbf{Position:} Simply swapping which completion (A or B) is shown first, with zero change to either completion's text.	\end{itemize}
+	\end{frame}
+
+	% TODO SCREENSHOT: [Extract Table 1 from the paper showing the artifact taxonomy and examples and save it as images/1/artifact_taxonomy.png]
+	\begin{frame}{Artifact Taxonomy \& Pipeline Visual}
+	\centering
+	\includegraphics[width=0.95\textwidth,height=0.78\textheight,keepaspectratio]{images/3/artifact_taxonomy.png}
+	\end{frame}
+
+	\begin{frame}[shrink=5]{Dataset \& Data Preparation}{Constructing the Safety Benchmark}
+	\begin{itemize}
+		\item \textbf{Prompt Suite:} 576 safety-critical prompts written by human safety experts, each targeting one of five domains.
+		\item \textbf{Safety Subdomains:} CSAM (heavily oversampled given its severity), Misinformation, Self-harm, Toxicity, and Sexually Explicit content.
+		\item \textbf{Completion Sourcing:} Completions drawn from five diverse generator models (Command, Command R, GPT-3.5 Turbo, Llama2-70B-chat, Mistral 8x7B) to ensure stylistic variety across pairs.
+		\item \textbf{Sample Size:} After removing malformed generations, 4,606 completions remain, forming 2,303 evaluation pairs -- the fixed base onto which artifacts are later injected.
+		\item \textbf{Gold Standard:} Triply annotated by trained human raters (majority vote); CSAM doubly annotated by external specialists with 97\% agreement; model identity and order anonymized to reduce annotator bias.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Evaluator Setup}{Model Diversity \& Scaling Design}
+	\begin{itemize}
+		\item \textbf{11 LLM Judges:} Evaluated across 5 major model families, spanning roughly 8B parameters up to frontier closed-source scale.
+		\item \textbf{Model Families:} Llama 3 (70B/8B), Claude 3 (Sonnet/Haiku), GPT-4 (Turbo/4o/4o-mini), Command R (Plus/base), and Mistral (Large/8x7B).
+		\item \textbf{Paired Scale Comparison:} Each family deliberately includes both a large and a small variant, so scale effects on robustness can be isolated rather than confounded with family identity.
+		\item \textbf{Testing Objective:} Determine whether parameter scale grants inherent robustness against artifacts, or whether size only helps with human alignment and not with bias resistance.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Evaluation Methodology}{Dual-Level Testing Framework}
+	\begin{itemize}
+		\item \textbf{Test 1 -- Tie Detection:} A completion vs.\ an artifact-injected copy of \emph{itself}; content is identical, so a robust judge must always call a tie -- any deviation is pure bias.
+		\item \textbf{Test 2 -- Winrate Shift:} Two genuinely different completions, artifact injected into only one side -- mimics a realistic leaderboard comparison.
+		\item \textbf{Complementary, Not Redundant:} A judge robust on artificial ties can still be biased once real content differences exist, so both tests are needed.
+		\item \textbf{Extra Axes:} Human Agreement (match rate vs.\ human majority vote) and Self-Consistency (match rate across temperature-zero reruns), each measured independently of robustness.
+		\item \textbf{Position Control:} Every comparison is run in both orderings and averaged, so artifact effects aren't confounded with position effects.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Mitigation Strategy (RQ2)}{Jury-Based Safety Evaluations}
+	\begin{itemize}
+		\item \textbf{Jury Configurations Tested:} \textbf{Large} (all big models per family), \textbf{Small} (all small models per family), and a hand-picked \textbf{Strong} jury.
+		\item \textbf{Strong Jury Design:} Combines models with high accuracy and \emph{anti-correlated} biases -- Command R Plus (strong overall robustness), Claude 3 Sonnet and Llama 3 70B (strong human agreement, with opposing position-bias directions that cancel out).
+		\item \textbf{Voting Rule:} Final jury verdict is the simple majority vote across the selected jurors.
+		\item \textbf{Underlying Bet:} If individual judges have inconsistent, sometimes opposing biases, aggregation should average out noise the same way ensembling reduces variance in classical ML.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Empirical Results (I)}{Artifact Robustness}
+	\begin{itemize}
+		\item \textbf{Apology dominates Tie Detection:} up to 98\% preference skew (near 100\% for GPT-4 Turbo); only Command R Plus stays robust.
+		\item \textbf{Position dominates Winrate Shift:} up to 30\% swing once completions genuinely differ -- more dangerous than Apology in realistic settings.
+		\item \textbf{Verbosity \& Authority:} verbosity has little to no effect once semantics are held constant; fake citations are consistently \emph{disfavored}, an open puzzle.
+		\item \textbf{Halo Effect:} negligible for almost every judge.
+		\item \textbf{Best Performer:} Command R Plus passes nearly every test, save a persistent position bias.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Empirical Results (II)}{Scaling, Alignment \& Jury Mitigation}
+	\begin{itemize}
+		\item \textbf{Size $\neq$ Robustness:} larger models align better with humans (62--71\%) but aren't consistently more artifact-robust -- smaller models sometimes win on position bias.
+		\item \textbf{Human Agreement $\neq$ Robustness:} high human agreement can still hide strong artifact sensitivity.
+		\item \textbf{Consistency Isn't Free:} even at temperature zero, GPT-4 family judges vary 3.1--5.7\% across reruns.
+		\item \textbf{Jury Mitigation Works, Partially:} the balanced Strong jury beats every individual judge and other juries on both robustness and human alignment, but residual Apology/Position bias survives -- an unresolved open problem.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Core Framework Strengths}
+	\begin{itemize}
+		\item \textbf{Safety-Specific Focus:} First systematic artifact-bias benchmark for safety judges, not just general instruction-following quality.
+		\item \textbf{Strict Semantic Control:} Superficial text features are cleanly separated from safety content, so any shift is unambiguous bias.
+		\item \textbf{Dual-Level Rigor:} Tie detection + winrate shift capture complementary failure modes a single test would miss.
+		\item \textbf{Practical Solution:} Validates an artifact-aware jury mechanism, not just a diagnosis.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Operational Limitations}
+	\begin{itemize}
+		\item \textbf{Incomplete Mitigation:} Jury consensus reduces but doesn't eliminate Apology/Position bias.
+		\item \textbf{Self-Enhancement Risk:} Verbosity rewrites come from Command R itself; some judges rate their own model family.
+		\item \textbf{Resource Overhead:} Multi-model juries cost more latency and compute than a single judge.
+		\item \textbf{Scope Limits:} Single-turn only, static artifact strings, and small subcategories (e.g., Self-harm: 108 samples).
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Critical Strategic Outlook}
+	\begin{itemize}
+		\item \textbf{Beyond Human Agreement:} Robustness and human alignment are complementary, not substitutable, metrics.
+		\item \textbf{Artifact-Aware Deployment:} Favor multi-agent panels with deliberately opposing biases over a single trusted judge.
+		\item \textbf{Decomposed Prompting:} Specific, decomposed questions + chain-of-thought reduce reliance on shortcuts.
+		\item \textbf{Bottom Line:} Single-judge safety leaderboards may be measuring artifact noise as much as real safety differences.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}[standout]
+		\hypertarget{paper4}{}
+		\Large Paper 4:\\Assessing Judging Bias in Large Reasoning Models
+	\end{frame}
+
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% PAPER 4: Assessing Judging Bias in Large Reasoning Models
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	\begin{frame}{Introduction \& Motivation}
+	\textbf{The Emergence of Reasoning Models as Judges}
+	
+	\begin{itemize}
+		\item Automated evaluation using models as judges has become industry standard.
+		\item Next-generation LRMs employ Chain-of-Thought and self-reflection before generating answers.
+		\item \textbf{Category Focus (Bias \& Fairness):} Evaluates systemic cognitive biases in LLM/LRM judges and validates empirical debiasing mechanisms.
+		\item \textbf{Core Question:} Does advanced reasoning capability make a model judge immune to cognitive biases, or does it introduce new failure modes?
+	\end{itemize}
+	\end{frame}
+
+	% TODO SCREENSHOT: [Extract Figure 1 from the paper showing the evaluation framework overview and save it as images/1/figure1.png]
+	\begin{frame}{Evaluation Framework Overview}
+	\begin{center}
+		\includegraphics[width=0.9\textwidth]{images/4/figure1.png}
+	\end{center}
+	\end{frame}
+
+	\begin{frame}{Core Taxonomy: Four Judging Biases}{What is actually being measured}
+	\textbf{Systematic Injection of Cognitive Biases}
+	
+	\begin{itemize}
+		\item \textbf{Bandwagon Bias:} Inserting false statements claiming massive user consensus behind wrong choices.
+		\item \textbf{Authority Bias:} Adding fake citations or endorsements from prominent academic institutions.
+		\item \textbf{Position Bias:} Systematically alternating option order (first vs. last position).
+		\item \textbf{Distraction Bias:} Injecting irrelevant contextual text into answer choices.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Dataset \& Data Preparation}{Two very different notions of "correct"}
+	\begin{itemize}
+		\item \textbf{Subjective / DPO datasets (100 samples each, 2 options):} Emerton-DPO, Orca-DPO, Py-DPO, Truthy-DPO — human-labeled preference pairs where one response is judged better than the other.
+		\item \textbf{Objective fact-related datasets (100 samples each, 10 options):} Math, Chemistry, History, Psychology, adapted from MMLU-Pro, each with one factually correct answer.
+		\item \textbf{Why both types:} Subjective tasks have no ground truth beyond human preference, while factual tasks have a verifiable correct answer — comparing the two isolates whether reasoning protects differently depending on task type.
+		\item \textbf{Total scope:} 8 datasets, 800 base samples, each subjected to all four bias injections separately.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Experimental / Model Setup}{Isolating the effect of reasoning}
+	\begin{itemize}
+		\item \textbf{Two LRMs:} DeepSeek-R1 (flagship reasoning model) and DeepSeek-R1-70B (a reasoning model distilled directly from Llama-3.3-70B).
+		\item \textbf{Three non-reasoning LLMs:} GPT-4o, Llama-3.3-70B, and DeepSeek-V3.
+		\item \textbf{Controlled pairing is the key design choice:} DeepSeek-R1 vs.\ DeepSeek-V3 (same lab/family) and R1-70B vs.\ Llama-3.3-70B (R1-70B is literally distilled from Llama-3.3) let the authors isolate the effect of reasoning capability, not just model identity.
+		\item \textbf{Fixed hyperparameters:} temperature = 0.7 for all models, each experiment repeated 3 times and averaged to reduce noise.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Methodology}{How judgments are scored}
+	\begin{itemize}
+		\item \textbf{Two task formats:} pairwise comparison (which of two responses is better) and multiple-choice selection (which of ten options is factually correct).
+		\item \textbf{Accuracy} measures whether the judgment matches ground truth, before and after bias injection.
+		\item \textbf{Robustness Rate (RR)} measures whether the judgment \emph{stays the same} after bias injection, regardless of correctness: $RR = \frac{1}{|D|}\sum_i \mathbb{1}(y_i = \hat{y}_i)$.
+		\item \textbf{Qualitative layer:} the authors also read the LRMs' \texttt{<think>} tags directly to trace \emph{how} a biased judgment forms step by step, not just whether it happens.
+		\item \textbf{Why both accuracy and RR matter:} a model can look "robust" by consistently repeating a wrong answer, so the two metrics together separate correctness from mere stubbornness.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Mitigation Strategies}{Three ways to fight back}
+	\begin{itemize}
+		\item \textbf{Targeted System Prompt:} explicit instructions to resist social influence, verify authority claims, ignore position, and filter distractions.
+		\item \textbf{In-Context Learning (ICL):} 5 worked examples per bias type showing the biased setup and the correct, unbiased reasoning.
+		\item \textbf{Self-Reflection Prompt:} a generic instruction to reflect on and self-correct any detected bias, with no mention of which bias type to expect.
+		\item \textbf{Test bed:} strategies were validated on Truthy-DPO and Chemistry, the two datasets that showed the worst vulnerability in the main benchmark.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Results I: Headline Findings}{Reasoning helps less than you'd expect}
+	\begin{itemize}
+		\item \textbf{Reasoning does not guarantee robustness:} even top-performing DeepSeek-R1 drops from 73\% to 37\% accuracy on Emerton-DPO under bandwagon injection.
+		\item \textbf{The advantage is domain-specific:} LRMs clearly outperform LLMs on \emph{fact-related} datasets, but show no meaningful edge on \emph{subjective preference} datasets.
+		\item \textbf{A genuine position bias in LRMs:} reasoning models consistently favor whichever option appears \emph{last}, unlike the mixed patterns seen in standard LLMs.
+		\item \textbf{Superficial Reflection Bias (novel finding):} simply inserting ``wait, let me think about it'' between two options — with zero real content — significantly shifts judgments toward the later option.
+		\item \textbf{Cross-family confirmation:} DeepSeek-V3, a non-reasoning model, shows the same reflection-cue sensitivity, suggesting the bias is rooted in training data structure, not reasoning itself.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Results II: Mitigation Effectiveness}{No single fix wins everywhere}
+	\begin{itemize}
+		\item \textbf{System prompts and ICL win on preference tasks:} up to 19\% (system prompt) and 27\% (ICL) accuracy recovery on Truthy-DPO.
+		\item \textbf{Self-reflection wins on factual tasks:} up to 16\% accuracy recovery on Chemistry, outperforming the other two strategies there.
+		\item \textbf{Model type matters:} self-reflection helps LRMs more (leveraging their native reasoning), while ICL helps LLMs more, especially on preference-based tasks.
+		\item \textbf{ICL is unreliable on facts:} some models gain over 30\% on Chemistry with ICL while others (e.g., GPT-4o) actually lose accuracy — a sign that ICL examples can't substitute for missing domain knowledge.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Strengths}{What the paper does well}
+	\begin{itemize}
+		\item \textbf{Genuinely controlled comparisons:} pairing distilled/parent models (R1-70B vs.\ Llama-3.3) isolates the reasoning variable rather than just comparing unrelated architectures.
+		\item \textbf{Mechanistic, not just statistical:} reading the \texttt{<think>} traces turns this from a pure benchmark into an explanation of \emph{why} bias forms, mirroring known human social-influence psychology.
+		\item \textbf{A real causal test for a new bias:} the minimal ``wait, wait, wait...'' intervention is a clean, targeted experiment that isolates the superficial-reflection hypothesis rather than just observing a correlation.
+		\item \textbf{Practically actionable output:} three complementary mitigation strategies, each mapped to when it works best, rather than one one-size-fits-all fix.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Limitations}{What to watch out for}
+	\begin{itemize}
+		\item \textbf{Small sample sizes:} only 100 examples per dataset, which makes several reported percentage swings sensitive to noise.
+		\item \textbf{Narrow model coverage:} only two LRMs tested, both from the DeepSeek family — no OpenAI-o1 or other reasoning architectures despite being named in the motivation.
+		\item \textbf{Artificial bias injection:} biases are inserted as blunt, explicit statements (``90\% believe...''), which is far cruder than how bias actually appears in the wild.
+		\item \textbf{Biases tested in isolation:} the four bias types are never combined, so real-world scenarios with overlapping biases remain unexplored.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Strategic Takeaways}{So what?}
+	\begin{itemize}
+		\item \textbf{Reasoning is not a bias shield:} organizations deploying LRMs as automated judges cannot assume chain-of-thought alone makes evaluations trustworthy.
+		\item \textbf{The reasoning mechanism itself can be exploited:} superficial reflection bias shows that the very feature meant to improve reliability can become a new attack surface.
+		\item \textbf{Mitigation must be context-aware:} the right fix depends on both model type (LRM vs.\ LLM) and task type (subjective vs.\ factual) — there's no universal prompt patch.
+		\item \textbf{Bottom line:} as LRM judges get deployed in higher-stakes settings, robust, domain-specific bias audits and human oversight remain essential, not optional.
+	\end{itemize}
+	\end{frame}
+	
+	\section{Category 3: Scalability Limits \& Benchmark Robustness}
+
+	\section{Category 4: Structured Reasoning \& Judge Training}
+	
+\end{document}
