@@ -1,4 +1,0 @@
-\beamer@sectionintoc {1}{Category 1: Benchmarks \& Frameworks for Judges}{2}{0}{1}
-\beamer@sectionintoc {2}{Category 2: Bias Quantification \& Fairness Analysis}{26}{0}{2}
-\beamer@sectionintoc {3}{Category 3: Scalability Limits \& Benchmark Robustness}{55}{0}{3}
-\beamer@sectionintoc {4}{Category 4: Structured Reasoning \& Judge Training}{56}{0}{4}
