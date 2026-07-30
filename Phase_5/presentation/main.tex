@@ -12,12 +12,21 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{caption}
+
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 \newcommand{\safeimage}[2][]{%
 	\IfFileExists{#2}{\includegraphics[#1]{#2}}{%
 		\fbox{\parbox[c][0.28\textheight][c]{0.78\textwidth}{\centering Missing figure:\\ \texttt{\detokenize{#2}}}}%
 	}%
 }
+\newcommand{\img}[2][]{%
+	\safeimage[#1]{#2}%
+}
+
+\newcommand{\smallnote}[1]{%
+	\par\centering{\scriptsize #1\par}%
+}
+
 
 \title{LLM-as-a-Judge Reliability}
 \subtitle{Combined Presentation: Benchmarks, Biases, and Robustness}
@@ -33,6 +42,290 @@
 	
 	
 	\section{Category 1: Benchmarks \& Frameworks for Judges}
+		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% PAPER 1: Neither Valid nor Reliable? Investigating the Use of LLMs as Judges
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	\begin{frame}[standout]
+		\hypertarget{paper1}{}
+		\Large Paper 1:\\Neither Valid nor Reliable? Investigating the Use of LLMs as Judges
+	\end{frame}
+	
+
+	\begin{frame}{Core Thesis}{Why this paper matters}
+		\begin{itemize}
+			\item \textbf{LLM-as-a-Judge (LLJ)} is now widely used to evaluate natural language generation systems.
+			\item The paper argues that adoption has moved faster than rigorous validation.
+			\item Main warning: a judge can be \textbf{consistent} but still measure the \textbf{wrong construct}.
+			\item The authors use \textbf{measurement theory} to examine whether LLJs are valid and reliable evaluators.
+		\end{itemize}
+		\vspace{0.25cm}
+		\textbf{Takeaway:} LLJs are promising, but treating them as neutral automatic evaluators is premature.
+	\end{frame}
+	
+	\begin{frame}{What is an LLM Judge?}{Evaluation setup and roles}
+		\begin{itemize}
+			\item An LLJ is prompted to evaluate model outputs by criteria such as \textbf{relevance}, \textbf{fluency}, \textbf{factuality}, \textbf{safety}, or task-specific quality.
+			\item It can be used in \textbf{pointwise}, \textbf{pairwise}, or \textbf{listwise} evaluation.
+			\item It may produce a \textbf{score}, \textbf{ranking}, \textbf{label}, \textbf{explanation}, or \textbf{feedback}.
+		\end{itemize}
+		
+		\vspace{0.2cm}
+		\textbf{Three major functions discussed in the paper:}
+		\begin{enumerate}
+			\item \textbf{Performance evaluation:} judging NLG system outputs.
+			\item \textbf{Model enhancement:} reward modeling or training feedback.
+			\item \textbf{Data construction:} annotation or data generation.
+		\end{enumerate}
+	\end{frame}
+	
+	\begin{frame}{Measurement Theory Lens}{Validity is not the same as reliability}
+		\begin{itemize}
+			\item \textbf{Reliability:} repeated applications of the judge give stable scores.
+			\item \textbf{Validity:} the score actually captures the intended construct.
+			\item \textbf{Random error} mainly harms reliability; \textbf{systematic error / bias} mainly harms validity.
+		\end{itemize}
+		\vspace{0.15cm}
+		\centering
+		\safeimage[width=0.92\textwidth,height=0.36\textheight,keepaspectratio]{images/1/construct_validity_table.png}
+		
+		{\scriptsize Table 1: dimensions of construct validity used by the authors.}
+		\vspace{0.1cm}
+		
+		\textbf{Key question:} what exactly is the LLM judge measuring?
+	\end{frame}
+	
+	\begin{frame}{Four Assumptions Behind LLJ Adoption}{The paper's main analytical map}
+		\centering
+		\safeimage[width=0.82\textwidth,height=0.66\textheight,keepaspectratio]{images/1/assumptions_overview.png}
+		
+		\vspace{0.1cm}
+		{\scriptsize Figure 1: four assumptions and the pitfalls that threaten validity and reliability.}
+	\end{frame}
+	
+	\begin{frame}{Assumption 1: LLJs as Human Proxies}{Correlation with humans is not enough}
+		\begin{itemize}
+			\item Many LLJ papers validate judges through \textbf{correlation with human judgments}.
+			\item The paper argues this is fragile because human evaluation criteria, instructions, expertise, and scales are often inconsistent.
+			\item \textbf{SummEval example:} the same fluency criterion is operationalized differently across LLJ studies.
+		\end{itemize}
+		\vspace{0.08cm}
+		\centering
+		\safeimage[width=0.96\textwidth,height=0.44\textheight,keepaspectratio]{images/1/summeval_table.png}
+		
+		{\scriptsize Table 3: inconsistent fluency instructions used for SummEval.}
+	\end{frame}
+	
+	\begin{frame}{Assumption 2: LLJs as Capable Evaluators}{Four capability gaps}
+		\begin{itemize}
+			\item \textbf{Instruction adherence:} LLJs may ignore definitions and apply their own interpretation of criteria.
+			\item \textbf{Unfaithful explanations:} rationales can look plausible without being the real basis of the judgment.
+			\item \textbf{Lack of robustness:} position bias, verbosity bias, prompt sensitivity, and adversarial attacks can change scores.
+			\item \textbf{Contested expertise:} LLJs may be used on subjective tasks where disagreement is meaningful, such as hate speech or political annotation.
+		\end{itemize}
+		\vspace{0.25cm}
+		\textbf{Use case: data annotation.} Higher agreement from an LLJ can hide diversity in human perspectives, especially in subjective tasks.
+	\end{frame}
+	
+	\begin{frame}{Assumption 3: LLJs as Scalable Evaluators}{Scaling can create new validity problems}
+		\begin{itemize}
+			\item LLJs are increasingly used inside alignment and safety pipelines: data generation, annotation, reward modeling, red-teaming, and guardrails.
+			\item \textbf{Scaling contamination:} the boundary between training and testing becomes blurred; benchmark memorization and preference leakage become possible.
+			\item \textbf{Competitive benchmarking:} automatic leaderboards can encourage overfitting, selective reporting, and optimization for the metric rather than the construct.
+			\item \textbf{Superficial alignment:} safety judges may rely on surface cues like refusal style or apology markers rather than substantive safety.
+		\end{itemize}
+		\vspace{0.2cm}
+		\textbf{Use case: safety alignment.} Small prompt or output modifications can mislead safety judges, weakening discriminant and predictive validity.
+	\end{frame}
+	
+	\begin{frame}{Assumption 4: LLJs as Cost-Effective Evaluators}{Cheap is not the same as responsible}
+		\begin{itemize}
+			\item LLJs are often cheaper and faster than crowdworkers or experts, but the paper argues that \textbf{non-financial costs} are under-discussed.
+			\item \textbf{Economic impact:} displacement of annotation labor without addressing labor conditions.
+			\item \textbf{Environmental impact:} inference at scale, especially with large models and juries, still consumes energy and resources.
+			\item \textbf{Societal impact:} LLJs can reproduce social biases and shift judgments when identity markers are present.
+		\end{itemize}
+		\vspace{0.2cm}
+		\textbf{Key validity issue:} consequential validity - what happens when these scores shape benchmarks, funding, and deployment decisions?
+	\end{frame}
+	
+	\begin{frame}{Path Forward}{How the authors think LLJs should be used}
+		\begin{itemize}
+			\item Evaluate LLJs \textbf{in context}: task, domain, evaluation goal, judge type, and downstream use matter.
+			\item Move beyond simple human-correlation metrics and test multiple validity dimensions.
+			\item Standardize evaluation criteria, prompts, scales, and reporting practices.
+			\item Treat LLJ bias mitigation as part of a broader problem: improving NLG evaluation methodology itself.
+			\item Use LLJs where they are useful, but avoid replacing careful evaluation design with automation.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{Critical Thinking}{Strengths and limitations}
+		\textbf{Strengths}
+		\begin{itemize}
+			\item Moves the discussion beyond ``LLJs correlate with humans''.
+			\item Uses measurement theory to separate \textbf{validity}, \textbf{reliability}, and \textbf{consequences}.
+			\item Connects technical failures to benchmark incentives and social costs.
+		\end{itemize}
+		
+		\vspace{0.1cm}
+		\textbf{Limitations}
+		\begin{itemize}
+			\item It is a \textbf{position paper}, not a new benchmark or large experiment.
+			\item Some arguments rely on prior work rather than new empirical evidence.
+			\item The path forward is persuasive, but still needs concrete protocols.
+		\end{itemize}
+		
+		\vspace{0.1cm}
+		\textbf{Bottom line:} the paper does not reject LLJs; it asks us to validate what they actually measure.
+	\end{frame}
+	
+		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% PAPER 2: Agent-as-a-Judge: Evaluate Agents with Agents
+	% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	
+	\begin{frame}[standout]
+		\hypertarget{paper2}{}
+		\Large Paper 2:\\Agent-as-a-Judge: Evaluate Agents with Agents
+	\end{frame}
+	\begin{frame}{Core Problem}{Why agent evaluation is different}
+		\begin{itemize}
+			\item Modern AI agents do not only generate a final answer; they \textbf{plan, use tools, edit files, run code, browse resources, and revise actions}.
+			\item Standard benchmarks often evaluate only the \textbf{final outcome}, so they miss where the agent failed during the process.
+			\item Human evaluation can inspect the full trajectory, but it is slow, expensive, and hard to scale.
+			\item The paper proposes a natural extension of \textbf{LLM-as-a-Judge}: use an \textbf{agentic judge} to evaluate an \textbf{agentic system}.
+		\end{itemize}
+		\vspace{0.2cm}
+		\textbf{Takeaway:} agents need judges that can interact with the workspace, not just read a final response.
+	\end{frame}
+	
+	\begin{frame}{Main Idea}{From LLM-as-a-Judge to Agent-as-a-Judge}
+		\vspace{-0.25cm}
+		\centering
+		\img[width=0.99\textwidth,height=0.76\textheight,keepaspectratio]{images/2/framework_overview.png}
+		\vspace{0.1cm}
+		
+		\smallnote{Figure 1: Agent-as-a-Judge extends LLM-as-a-Judge from conversation outputs to interactive agent workspaces.}
+	\end{frame}
+	
+	\begin{frame}{Contribution 1: DevAI Benchmark}{Realistic automated AI development tasks}
+		\vspace{-0.2cm}
+		\centering
+		\img[width=0.99\textwidth,height=0.68\textheight,keepaspectratio]{images/2/devai_distribution.png}
+		
+		\vspace{0.08cm}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.33\textwidth}\centering\textbf{55} tasks
+			\column{0.33\textwidth}\centering\textbf{365} hierarchical requirements
+			\column{0.33\textwidth}\centering\textbf{125} preferences
+		\end{columns}
+	\end{frame}
+	
+	\begin{frame}{Evaluation Design}{What is being judged?}
+		\begin{itemize}
+			\item \textbf{Developer agents:} MetaGPT, GPT-Pilot, and OpenHands.
+			\item \textbf{Human-as-a-Judge:} three human experts inspect generated workspaces, trajectories, and task requirements.
+			\item \textbf{LLM-as-a-Judge:} a normal LLM judge evaluates outputs mostly from text/context.
+			\item \textbf{Agent-as-a-Judge:} a judge agent actively inspects the workspace and checks each requirement.
+		\end{itemize}
+		
+		\vspace{0.15cm}
+		\textbf{Metrics:}
+		\begin{itemize}
+			\item \textbf{Requirements Met}: percentage of requirements judged satisfied.
+			\item \textbf{Task Solve Rate}: whether the whole task was solved.
+			\item \textbf{Judge Shift}: deviation from human consensus; lower is better.
+			\item \textbf{Alignment Rate}: agreement with human consensus across the 365 requirements.
+		\end{itemize}
+	\end{frame}
+	
+	\begin{frame}{How the Judge Agent Works}{Graph, read, ask, retrieve, locate}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.47\textwidth}
+			\begin{itemize}
+				\item \textbf{Graph}: builds a structure of files, modules, and dependencies.
+				\item \textbf{Read}: opens code, images, videos, documents, and other artifacts.
+				\item \textbf{Ask}: decides whether each requirement is satisfied.
+				\item \textbf{Retrieve / locate}: finds relevant files and evidence.
+				\item Output: \textbf{requirement-level scores} plus explanations.
+			\end{itemize}
+			
+			\column{0.51\textwidth}
+			\vspace{-0.25cm}
+			\centering
+			\img[width=0.98\textwidth,height=0.70\textheight,keepaspectratio]{images/2/architecture_modules.png}
+		\end{columns}
+	\end{frame}
+	
+	\begin{frame}{Pipeline: Developer Agent}{The task-solving trajectory is part of the evaluation target}
+		\vspace{-0.25cm}
+		\centering
+		\img[width=0.99\textwidth,height=0.76\textheight,keepaspectratio]{images/2/pipeline_developer.png}
+	\end{frame}
+	
+	\begin{frame}{Pipeline: Judge Agent}{The judge actively inspects artifacts and checks requirements}
+		\vspace{-0.25cm}
+		\centering
+		\img[width=0.99\textwidth,height=0.76\textheight,keepaspectratio]{images/2/pipeline_judge.png}
+		\vspace{0.08cm}
+		
+		\smallnote{The bottom half of Figure 9: the judge uses graph/read/ask/retrieve/locate to verify requirements.}
+	\end{frame}
+	
+	\begin{frame}{Key Results}{Agent-as-a-Judge is closer to human consensus}
+		\vspace{-0.3cm}
+		\centering
+		\img[width=0.99\textwidth,height=0.76\textheight,keepaspectratio]{images/2/results_core_table.png}
+		
+		\vspace{0.08cm}
+		\smallnote{Core section of Table 3: Agent-as-a-Judge generally has smaller judge shift and higher alignment than LLM-as-a-Judge.}
+	\end{frame}
+	
+	\begin{frame}{Precision--Recall and Cost}{Better quality, much cheaper than human evaluation}
+		\begin{columns}[T,onlytextwidth]
+			\column{0.58\textwidth}
+			\vspace{-0.3cm}
+			\centering
+			\img[width=0.98\textwidth,height=0.72\textheight,keepaspectratio]{images/2/pr_curve.png}
+			
+			\column{0.39\textwidth}
+			\begin{itemize}
+				\item Agent-as-a-Judge gives lower \textbf{Judge Shift} than LLM-as-a-Judge.
+				\item For OpenHands, alignment is around \textbf{90\%}; LLM-as-a-Judge is around \textbf{60--71\%}.
+				\item Human evaluation: \textbf{86.5 hours}, about \textbf{1297.50 USD}.
+				\item Agent-as-a-Judge: \textbf{118.43 minutes}, about \textbf{30.58 USD}.
+			\end{itemize}
+		\end{columns}
+	\end{frame}
+	
+	\begin{frame}{Beyond Evaluation}{Why this matters for self-improving agents}
+		\begin{itemize}
+			\item Agentic tasks often have sparse final rewards: a task may fail for many different intermediate reasons.
+			\item Agent-as-a-Judge can provide \textbf{intermediate feedback}: which requirement failed, which file is wrong, and what evidence supports the verdict.
+			\item This feedback could become a reward signal for \textbf{process supervision}, reinforcement learning, or automatic agent debugging.
+			\item The authors frame this as a possible \textbf{flywheel}: better agents produce better workspaces, and better judge agents provide better feedback for future agents.
+		\end{itemize}
+		\vspace{0.15cm}
+		\textbf{Main future direction:} use agentic judges not only for benchmarking, but also for scalable agent improvement.
+	\end{frame}
+	
+	\begin{frame}{Critical Thinking}{Strengths and limitations}
+		\textbf{Strengths}
+		\begin{itemize}
+			\item Correctly argues that agent evaluation should inspect the \textbf{process}, not just the final output.
+			\item DevAI is more realistic than toy coding benchmarks and uses hierarchical requirements.
+			\item The comparison with human consensus is clear and practical.
+		\end{itemize}
+		\vspace{0.1cm}
+		\textbf{Limitations}
+		\begin{itemize}
+			\item It is still a proof-of-concept: 55 tasks and only three developer agents.
+			\item The benchmark is limited to automated AI/software development; generalization to web, robotics, or multi-agent settings is not guaranteed.
+			\item The judge agent may inherit agent weaknesses: tool failures, hallucinated evidence, prompt sensitivity, and unstable planning.
+			\item Human majority vote is useful, but not a perfect ground truth.
+		\end{itemize}
+		\vspace{0.1cm}
+		\textbf{Bottom line:} promising direction, but it needs broader benchmarks and stronger validation before replacing human evaluation.
+	\end{frame}
+	
 	
 	
 	\section{Category 2: Bias Quantification \& Fairness Analysis}
