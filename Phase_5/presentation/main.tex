@@ -587,8 +587,405 @@
 	\end{itemize}
 	\end{frame}
 	
+	% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+	% PAPER 5: Distributional LLM-as-a-Judge
+	% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+	\begin{frame}{Category 2 Alignment}{Distributional LLM-as-a-Judge}
+	\begin{itemize}
+		\item \textbf{Category Theme:} Isolating, quantifying, and mitigating systemic flaws in LLM evaluators, rather than building a new alignment benchmark from scratch.
+		\item \textbf{Beyond Accuracy:} Moving past surface-level agreement-with-human metrics to test whether an evaluator is actually \emph{fair} and \emph{consistent} in how it reaches a verdict.
+		\item \textbf{Core Investigation:} Moving from deterministic single-point target training to distributional alignment matching human annotator distributions via Hybrid Loss (KL + CE) and Adversarial Perturbation (PGD).
+		\item \textbf{High-Stakes Context:} Single-point judgments collapse valuable distributional signal (disagreement, uncertainty, subjectivity) into a single decision, limiting reliability in high-stakes domains.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Introduction \& Motivation}{The Paradigm Shift}
+	\begin{itemize}
+		\item \textbf{Core Problem:} Previous LLM-as-a-Judge methods rely on single-point evaluations, outputting a single result per sample and overlooking the inherent diversity of human evaluations.
+		\item \textbf{Information Loss:} Human evaluations follow a distribution encoding valuable signals like consensus level and controversy; replacing this with single-point judgment causes critical information loss.
+		\item \textbf{Overconfidence Issue:} LLMs are often overconfident and skewed toward a few options, producing distributions misaligned with human annotations.
+		\item \textbf{Key Insight:} Train LLMs to produce judgment distributions that explicitly align with human evaluation distributions, capturing both consensus and diversity in annotations.
+	\end{itemize}
+	\end{frame}
+
+	% PLACEHOLDER: Insert Figure 1 (Single-Point vs Distributional Alignment)
+\begin{frame}{Single-Point vs. Distributional Alignment}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\textwidth]{images/5/figure-1.png}
+        \caption{Comparison between single-point alignment (LLM outputs single label) and distribution alignment (LLM outputs probability distribution over labels matching human annotator distribution).}
+    \end{figure}
+\end{frame}
+
+	\begin{frame}{Proposed Architecture}{Hybrid Loss (KL + CE)}
+	\begin{itemize}
+		\item \textbf{Dual Objective:} Combine KL Divergence for distributional alignment with Cross-Entropy regularization for training stability.
+		\item \textbf{KL Divergence Loss:} Penalizes deviations from the target human distribution, enabling fine-grained alignment:
+		\begin{equation}
+			L_{KL}(\theta) = D_{KL}(\mathbf{p}(x) \| \mathbf{q}_\theta(x))
+		\end{equation}
+		\item \textbf{Hybrid Loss Function:} Blends both objectives via weighting factor $\alpha \in [0, 1]$:
+		\begin{equation}
+			L_{Hybrid}(\theta) = \alpha \cdot L_{KL}(\theta) + (1 - \alpha) \cdot L_{CE}(\theta)
+		\end{equation}
+		\item \textbf{Analogy to Knowledge Distillation:} KL divergence acts as soft targets (rich signal from teacher), while CE provides hard label supervision for stable convergence.
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Robust Alignment}{Adversarial Perturbation via PGD}
+	\begin{itemize}
+		\item \textbf{Problem:} Empirical human distributions are noisy estimates due to limited annotations; direct alignment risks overfitting to sampling artifacts.
+		\item \textbf{Solution:} Adversarial training with PGD-based label perturbation within radius $\epsilon$, formulating a min-max optimization:
+		\begin{equation}
+			\min_\theta \max_{\mathbf{p}' \in \mathcal{E}} L_{Hybrid}(\theta, \mathbf{p}')
+		\end{equation}
+		\item \textbf{Two-Step Process:} (1) Adversarial distribution generation via gradient ascent on KL divergence; (2) Model update minimizing the perturbed loss.
+		\item \textbf{Rationale:} Aligning with worst-case perturbations ensures robustness against any plausible distribution within the bounded set, improving generalization.
+	\end{itemize}
+	\end{frame}
+
+	% PLACEHOLDER: Insert Figure 2b (Adversarial Perturbation Motivation)
+\begin{frame}{Framework Overview}{Adversarial Distribution Perturbation}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\textwidth]{images/5/figure-2.png}
+        \caption{Illustrates the relationship between empirical, perturbed, and true underlying distributions. Robust alignment mitigates deviation in empirical human distribution.}
+    \end{figure}
+\end{frame}
+
+	\begin{frame}{Experimental Setup}{Models, Datasets, and Metrics}
+	\begin{itemize}
+		\item \textbf{Base Models:} Qwen2.5-7B and LLaMA3.1-8B (LoRA fine-tuning) vs. GPT-4o and GPT-4o-mini (closed-source baselines).
+		\item \textbf{Datasets:} (1) NLI: SNLI/MNLI (logical relationship classification, 5 annotators per instance); (2) Quality: SummEval (Likert 1-5 scale, 4 dimensions); (3) Preferences: MT-Bench (A vs.\ B vs.\ Tie).
+		\item \textbf{Baselines:} Raw Model (no fine-tuning) and Single-point Alignment (majority-vote label).
+		\item \textbf{Primary Metric:} KL Divergence (lower = better alignment).
+		\item \textbf{Secondary Metric:} Top-1 Accuracy (majority label match rate).
+	\end{itemize}
+	\end{frame}
+
+	% PLACEHOLDER: Insert Table 1 (Main Results with highlighted Distribution Alignment row)
+\begin{frame}{Main Results}{Dramatic KL Reduction with Accuracy Preservation}
+    \begin{itemize}
+        \item \textbf{Key Result:} Distribution alignment substantially outperforms single-point methods on KL divergence while maintaining or improving accuracy.
+        \item \textbf{Qwen2.5 SNLI:} KL drops from 0.60 (single-point) to \textbf{0.23} (distribution); accuracy improves from 92.7\% to \textbf{93.3\%}.
+        \item \textbf{LLaMA3.1 SNLI:} KL drops from 0.69 to \textbf{0.28}; accuracy maintained at 92.4\%.
+        \item \textbf{Closed-Source Gap:} Even GPT-4o shows KL = 1.75 (raw), far worse than fine-tuned open-source models.
+        \item \textbf{Cross-Task Generalization:} Consistent gains across NLI, SummEval, and MT-Bench datasets.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Main Results}{Table 1 - Performance Comparison}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\textwidth]{images/5/table-1.png}
+        \caption{Main results comparing raw models, single-point alignment, and distribution alignment across four datasets.}
+    \end{figure}
+\end{frame}
+
+	% PLACEHOLDER: Insert Figure 3 (Ablation Study on alpha and epsilon)
+\begin{frame}{Ablation Study}{Parameter Dynamics and Component Contributions}
+    \begin{itemize}
+        \item \textbf{KL Loss is Essential:} Removing KL divergence causes KL to skyrocket (e.g., 0.23 $\rightarrow$ 0.78 on Qwen2.5), confirming its primary role.
+        \item \textbf{CE Stabilizes Training:} Removing CE causes slight KL increase; critical for subjective tasks like MT-Bench where pure KL becomes unstable.
+        \item \textbf{Adversarial Training Helps:} Removing adversarial component degrades performance; $\epsilon = 0.25$ provides optimal robustness.
+        \item \textbf{Optimal $\alpha$:} Performance peaks at $\alpha = 0.8$ (20\% CE); completely removing CE ($\alpha = 1.0$) degrades performance.
+    \end{itemize}
+\end{frame}
+\begin{frame}{Ablation Study}{Figure 3 - Alpha and Epsilon Effects}
+    \begin{figure}
+        \centering
+        \includegraphics[width=\textwidth]{images/5/figure-3.png}
+        \caption{Effect of weighting parameter $\alpha$ and perturbation radius $\epsilon$ on KL divergence across four datasets.}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{OOD Generalization}{Annotation Budget Efficiency}
+    \begin{itemize}
+        \setlength{\itemsep}{3pt}
+        \item \textbf{ChaosNLI:} 100 annotators/sample provides richer ground-truth; tests robustness to shift.
+        \item \textbf{Budget Insight:} Few samples with many annotators $\succ$ many samples with single annotator.
+        \item \textbf{Robustness:} Our method maintains lowest KL across all $\delta \in [0.00, 0.25]$.
+        \item \textbf{Generalization:} Adapts to varying annotation patterns without architectural changes.
+    \end{itemize}
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.8\textwidth]{images/5/table-4.png}
+        \caption{Out-of-distribution performance on ChaosNLI and annotation budget efficiency analysis.}
+    \end{figure}
+\end{frame}
+
+	\begin{frame}{Comparative Evaluation}{Strengths and Limitations}
+	\textbf{Strengths:}
+	\begin{itemize}
+		\item \textbf{Captures Human Disagreement:} Outputs distribution matching annotator consensus and controversy, not just majority vote.
+		\item \textbf{Robust to Annotation Noise:}
+		\item \textbf{No Architecture Changes:} Works with existing LLM backbones via LoRA fine-tuning
+		\item \textbf{Strong Empirical Gains:} Consistently outperforms closed-source baselines (GPT-4o) on distributional alignment.
+	\end{itemize}
+	\textbf{Limitations:}
+	\begin{itemize}
+		\item \textbf{Requires Multi-Annotator Datasets:} Cannot apply without distribution labels;
+		\item \textbf{Lacks Distributional Explanation:} Outputs score distributions but not chain-of-thought reasoning explaining the distribution.
+		\item \textbf{Top-5 Logit Bias:} Truncation may miss heavy-tail tokens; 
+	\end{itemize}
+	\end{frame}
+
+	\begin{frame}{Critical Perspective}{Hidden Limitations and Open Questions}
+	\begin{itemize}
+		\item \textbf{Top-5 Logit Extraction Bias:} Limiting to top-5 logits (due to API restrictions) truncates heavy-tail distributions; tokens beyond 5th are non-negligible only below 1e-6.
+		\item \textbf{HelpSteer2 Granularity Compression:} Original 6-point scale reduced to 3-point A/B/Tie; distributional nuance compressed in preference tasks.
+		\item \textbf{The ``Reasoning Gap'':} Evaluates score distributions, not the distribution of explanatory reasoning chains -- judges what but not why.
+		\item \textbf{Dataset Scarcity:} High annotation costs limit multi-annotator datasets; limits practical deployment at scale.
+		\item \textbf{Stability on Subjective Tasks:} Pure KL divergence becomes unstable on MT-Bench; requires careful $\alpha$ tuning.
+	\end{itemize}
+	\end{frame}
+	
 	\section{Category 3: Scalability Limits \& Benchmark Robustness}
 
 	\section{Category 4: Structured Reasoning \& Judge Training}
-	
+		\begin{frame}[standout]
+		\hypertarget{paper6}{}
+		\Large Paper 6:\\Learning LLM-as-a-Judge for Preference Alignment (Con-J)
+	\end{frame}
+
+	% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+	% PAPER 6: Con-J - Learning LLM-as-a-Judge for Preference Alignment
+	% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\begin{frame}{Category 4: Motivation \& Core Concept}{Transitioning from Scalar Heads to Generative Judges}
+\begin{block}{The Problem with Scalar Reward Models}
+    \begin{itemize}
+        \item \textbf{Lack of Interpretability:} Value heads output a single scalar score with no rationale.
+        \item \textbf{Susceptibility to Bias:} Overfits to shallow shortcuts (e.g., response length, formatting).
+        \item \textbf{Representation Loss:} Replacing LLM layers with a linear head degrades pre-trained knowledge.
+    \end{itemize}
+\end{block}
+
+\begin{block}{The Con-J Solution}
+    \begin{itemize}
+        \item \textbf{Generative Judgment:} Generates JSON outputs containing step-by-step rationales ($j_r$) and binary preference predictions ($j_y$).
+        \item \textbf{Self-Bootstrapping:} Trains via DPO on self-generated contrastive pairs without external teacher models (e.g., GPT-4).
+        \item \textbf{Bias Regularization:} Distributes data bias across rationale tokens, shielding the preference decision.
+    \end{itemize}
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Task Formulation \& Problem Definition}
+\begin{itemize}
+    \item \textbf{Task Objective:} Given a question $q$ and an answer pair $(a^1, a^2)$, predict the preferred answer $a^+ > a^-$.
+    \item \textbf{Scalar Pairwise Loss:}
+    $$\mathcal{L}^{SM} = -\sum \log \sigma(r(q,a^+,a^-))$$
+    \item \textbf{Con-J Generative Output Structure:}
+    \begin{itemize}
+        \item \texttt{rationale}: Natural language step-by-step reasoning
+        \item \texttt{better\_answer}: Preference prediction ($1$ or $2$)
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Scalar Model vs. Con-J Architecture}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.95\textwidth,height=0.85\textheight,keepaspectratio]{images/6/figure-1.png}
+        \caption{Architectural comparison between standard scalar reward models and the proposed Con-J generative judge.}
+        \label{fig:conj_architecture}
+    \end{figure}
+\end{frame}
+
+
+\begin{frame}{Con-J Pipeline: Pair Generation \& Filtering}
+    \begin{itemize}
+        \item \textbf{Step 1: Hint-Driven Sampling}
+        \begin{itemize}
+            \item Temperature $1.0$ alone yields one-sided outputs.
+            \item Inject hints (\emph{``The better answer is: 1/2''}) to force generation of positive and negative rationales.
+        \end{itemize}
+        \item \textbf{Step 2: Judgment Filtering}
+        \begin{itemize}
+            \item Match predictions against ground-truth labels.
+            \item Form contrastive pairs $(j^+, j^-) \in M(p)^+ \times M(p)^-$.
+            \item Budget: 8 samples $\rightarrow$ up to 4 contrastive pairs.
+        \end{itemize}
+    \end{itemize}
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.75\textwidth,height=0.45\textheight,keepaspectratio]{images/6/figure-2.png}
+        \caption{Three-step construction of Con-J judgment dataset.}
+        \label{fig:conj_pipeline}
+    \end{figure}
+\end{frame}
+
+
+\begin{frame}{Contrastive Training Optimization \& Theory}
+\begin{block}{Joint DPO + SFT Objective}
+    \begin{itemize}
+        \item \textbf{DPO Loss on Contrastive Pairs:}
+        $$\mathcal{L}^{DPO} = -\mathbb{E} \log \sigma \left( \log \frac{\pi_\theta(j^+|q,a^+,a^-)}{\pi_0(j^+|q,a^+,a^-)} - \log \frac{\pi_\theta(j^-|q,a^+,a^-)}{\pi_0(j^-|q,a^+,a^-)} \right)$$
+        \item \textbf{Combined Objective ($\alpha = 10^{-6}$ to preserve JSON syntax):}
+        $$\mathcal{L}^{final} = \mathcal{L}^{DPO} + \alpha \cdot \mathcal{L}^{SFT}$$
+    \end{itemize}
+\end{block}
+
+\begin{block}{Theoretical Bias Mitigation Mechanism}
+    \begin{itemize}
+        \item \textbf{Rationale Regularization:} $P_\theta(j_y|p) = \sum_{j_r} P_\theta(j_y|j_r,p) P_\theta(j_r|p)$.
+        \item Preference bias scatters across explanation tokens ($j_r$), reducing impact on decision $j_y$.
+        \item Preserves generative pre-training weights, preventing rapid overfitting to shallow shortcuts.
+    \end{itemize}
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Experimental Setup \& Public Benchmarks}
+\begin{itemize}
+    \item \textbf{Setup:} Base Model = Qwen2-7B-Instruct | DeepSpeed ZeRO-3, BF16/TF32 | LR $5 \times 10^{-7}$.
+    \item \textbf{Key Result:} 7B Con-J surpasses GPT-4o and all open-source judges without external teacher distillation.
+\end{itemize}
+
+\vspace{0.2cm}
+\begin{table}
+    \centering
+    \small
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Model} & \textbf{Inf.-Pref.} & \textbf{UltraFeed.} & \textbf{PKU-Safe.} & \textbf{Reward-Bench} \\
+        \midrule
+        Auto-J (7B) & 69.0 & 63.9 & 66.9 & -- \\
+        Prometheus 2 (7B) & 68.0 & 63.3 & 63.0 & -- \\
+        GPT-4o & 75.0 & 72.2 & \textbf{69.6} & 88.0 \\
+        \textbf{Con-J (7B)} & \textbf{81.0} & \textbf{73.0} & 68.4 & \textbf{88.0} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Accuracy on public benchmarks. Con-J sets state-of-the-art across key datasets.}
+    \label{tab:conj_public}
+\end{table}
+\end{frame}
+
+
+\begin{frame}{Commercial Performance \& Component Ablation}
+\begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+        \textbf{Commercial Benchmark Accuracy}
+        \vspace{0.1cm}
+        \begin{table}
+            \centering
+            \tiny
+            \begin{tabular}{lccc}
+                \toprule
+                Model & Creation & Math & Code \\
+                \midrule
+                GPT-4o & 55.6* & 74.8* & 68.1* \\
+                SM (pointwise) & 69.4* & 84.8 & 69.4 \\
+                SM (pairwise) & 69.2* & 84.6 & 69.6 \\
+                \textbf{Con-J} & \textbf{72.4} & \textbf{85.0} & \textbf{70.1} \\
+                \bottomrule
+            \end{tabular}
+            \caption{Commercial datasets (* = $p < 0.05$ vs. Con-J).}
+        \end{table}
+    \end{column}
+    
+    \begin{column}{0.5\textwidth}
+        \textbf{Ablation Study Findings}
+        \vspace{0.1cm}
+        \begin{table}
+            \centering
+            \tiny
+            \begin{tabular}{lccc}
+                \toprule
+                Model & Creation & Math & Code \\
+                \midrule
+                Con-J Untrained & 53.6* & 63.4* & 61.7* \\
+                w/o Hint Sampling & 61.3* & 77.4* & 68.2 \\
+                w/o DPO (SFT only) & 54.6* & 64.2* & 63.5* \\
+                \textbf{Full Con-J} & \textbf{72.4} & \textbf{85.0} & \textbf{70.1} \\
+                \bottomrule
+            \end{tabular}
+            \caption{Ablation results highlighting component roles.}
+        \end{table}
+    \end{column}
+\end{columns}
+
+\vspace{0.2cm}
+\begin{itemize}
+    \item \textbf{Hint Sampling is Essential:} Dropping hints causes a $\approx 11\%$ drop in Creation.
+    \item \textbf{DPO vs SFT:} SFT alone collapses accuracy to near-untrained levels (54.6\%).
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Rationale Quality \& Consistency Analysis}
+    \begin{itemize}
+        \item \textbf{Quality Self-Evolution:} Correctness score improves (4.15 $\rightarrow$ 4.35 / 5) as training pairs scale to 64k.
+        \item \textbf{Consistency Collapse Paradox:} Preference accuracy grows, but rationale-decision consistency declines during late training (post-hoc rationalization).
+        \item \textbf{Downstream Rationale Utility:} Distilling Con-J rationales into weak judges improves their accuracy from 63\% to 78\%.
+    \end{itemize}
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.90\textwidth,height=0.40\textheight,keepaspectratio]{images/6/figure-3.png}
+        \caption{Rationale correctness scaling and weak judge transfer.}
+        \label{fig:conj_rationale}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Bias Robustness Analysis}
+    \begin{itemize}
+        \item \textbf{Adversarial Injection ($\gamma > 0.33$):} Scalar models suffer complete collapse under synthetic format and length bias; Con-J retains stable performance.
+        \item \textbf{Role of Rationale:} Removing rationales causes accuracy to plummet under verbosity shortcuts ($47.1\%$ vs $58.7\%$).
+        \item \textbf{Conclusion:} Forcing textual reasoning prevents the model from relying solely on surface features.
+    \end{itemize}
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.90\textwidth,height=0.40\textheight,keepaspectratio]{images/6/figure-4.png}
+        \caption{Robustness under format (top) and verbosity (bottom) bias injection.}
+        \label{fig:conj_bias}
+    \end{figure}
+\end{frame}
+
+
+\begin{frame}{Framework Strengths vs. Operational Limitations}
+\begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+        \begin{block}{Framework Strengths}
+            \begin{itemize}
+                \item \textbf{No Teacher Distillation:} Eliminates dependency on GPT-4 outputs.
+                \item \textbf{Auditability:} Generates interpretable natural language rationales.
+                \item \textbf{SOTA Efficiency:} 7B parameters outperforming 70B+ baselines.
+                \item \textbf{Bias Resilience:} Robust against length and formatting shortcuts.
+            \end{itemize}
+        \end{block}
+    \end{column}
+    
+    \begin{column}{0.5\textwidth}
+        \begin{block}{Operational Limitations}
+            \begin{itemize}
+                \item \textbf{Sampling Overhead:} Requires 8–10 forward passes per training sample.
+                \item \textbf{SFT Weight Sensitivity:} Requires delicate tuning ($\alpha = 10^{-6}$) to prevent reward hacking.
+                \item \textbf{Consistency Paradox:} Late-stage post-hoc rationalization needs joint optimization.
+            \end{itemize}
+        \end{block}
+    \end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Strategic Outlook \& Future Directions}
+\begin{itemize}
+    \item \textbf{Multi-Dimensional Alignment:} Extending Con-J from binary preferences to multi-criteria scoring with per-dimension rationales.
+    \item \textbf{Online RLHF Integration:} Deployment as an online reward signal while monitoring for model collapse risks.
+    \item \textbf{Mitigating Consistency Collapse:} Designing auxiliary loss functions that enforce explicit alignment between rationale tokens and final choices.
+    \item \textbf{Broader Bias Audits:} Testing resilience against complex cognitive biases (e.g., sycophancy, logical fallacies).
+\end{itemize}
+
+\vspace{0.4cm}
+\begin{alertblock}{Bottom Line}
+    Con-J establishes a scalable, self-bootstrapped approach for training generative LLM judges that match commercial APIs in accuracy while offering interpretable rationales and higher bias resistance.
+\end{alertblock}
+\end{frame}
 \end{document}
